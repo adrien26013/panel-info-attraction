@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Drakkar 01</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #eef2f7; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 90%; max-width: 400px; }
+        h1 { color: #1a73e8; text-align: center; margin-bottom: 25px; }
+        .group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #444; }
+        input, textarea { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; outline: none; transition: 0.3s; }
+        input:focus, textarea:focus { border-color: #1a73e8; }
+        button { width: 100%; background: #1a73e8; color: white; border: none; padding: 15px; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        button:hover { background: #1557b0; transform: translateY(-2px); }
+        .status { margin-top: 20px; text-align: center; color: #2ecc71; font-weight: bold; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>DRAKKAR_01</h1>
+    
+    <div class="group">
+        <label>Capacité (Pers/Heure)</label>
+        <input type="number" id="capa" value="800">
+    </div>
+
+    <div class="group">
+        <label>Message à l'écran</label>
+        <textarea id="msg" rows="3">Bienvenue au Drakkar !</textarea>
+    </div>
+
+    <button onclick="envoyer()">Mettre à jour le Parc</button>
+    <div id="status" class="status">✅ Écran mis à jour !</div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    // REMPLACE PAR TES INFOS (Paramètres Firebase > Général > Tes applications)
+    const firebaseConfig = {
+        apiKey: "AIzaSyDWob3NIJTPxrdpreSpDr__eaPJA2ZCTl0",
+        authDomain: "attraction-info.firebaseapp.com",
+        databaseURL: "https://attraction-info-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "attraction-info",
+        storageBucket: "attraction-info.firebasestorage.app",
+        messagingSenderId: "335011135222",
+        appId: "1:335011135222:web:db513acd348e55e20c76d7"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    window.envoyer = function() {
+        const capaValue = document.getElementById('capa').value;
+        const msgValue = document.getElementById('msg').value;
+
+        update(ref(db, 'attractions/DRAKKAR_01'), {
+            capa_heure: parseInt(capaValue),
+            info_message: msgValue
+        }).then(() => {
+            const status = document.getElementById('status');
+            status.style.display = 'block';
+            setTimeout(() => { status.style.display = 'none'; }, 3000);
+        });
+    }
+</script>
+
+</body>
+</html>
