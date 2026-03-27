@@ -58,7 +58,7 @@
         const msgValue = document.getElementById('msg').value;
 
         // On garde DRAKKAR_01 ici pour que la liaison avec le Raspberry ne coupe pas
-        update(ref(db, 'attractions/DRAKKAR_01'), {
+        update(ref(db, 'attractions/DRAKKAR'), {
             capa_heure: parseInt(capaValue),
             info_message: msgValue
         }).then(() => {
