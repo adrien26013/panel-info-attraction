@@ -1,26 +1,173 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Drakkar - Gestion Attraction</title>
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --secondary: #34a853;
+            --bg: #f0f2f5;
+            --dark: #202124;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background: var(--bg); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+        }
+
+        .card { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 24px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1); 
+            width: 100%; 
+            max-width: 450px; 
+        }
+
+        h1 { 
+            color: var(--dark); 
+            text-align: center; 
+            margin-top: 0;
+            margin-bottom: 30px; 
+            text-transform: uppercase; 
+            letter-spacing: 3px;
+            font-size: 24px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+        }
+
+        .group { margin-bottom: 25px; }
+
+        label { 
+            display: block; 
+            margin-bottom: 10px; 
+            font-weight: 600; 
+            color: #5f6368; 
+            font-size: 14px;
+        }
+
+        input[type="number"], textarea { 
+            width: 100%; 
+            padding: 14px; 
+            border: 2px solid #e0e0e0; 
+            border-radius: 12px; 
+            box-sizing: border-box; 
+            font-size: 16px; 
+            outline: none; 
+            transition: all 0.3s ease; 
+            background: #f8f9fa;
+        }
+
+        input:focus, textarea:focus { 
+            border-color: var(--primary); 
+            background: white;
+            box-shadow: 0 0 0 4px rgba(26, 115, 232, 0.1);
+        }
+
+        button { 
+            width: 100%; 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 16px; 
+            border-radius: 12px; 
+            font-size: 16px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: all 0.3s; 
+            box-shadow: 0 4px 6px rgba(26, 115, 232, 0.2);
+        }
+
+        button:hover { 
+            background: #1557b0; 
+            transform: translateY(-2px); 
+            box-shadow: 0 6px 12px rgba(26, 115, 232, 0.3);
+        }
+
+        /* Section Musique */
+        .music-section {
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 1px dashed #ddd;
+        }
+
+        input[type="file"] {
+            font-size: 13px;
+            margin-bottom: 10px;
+            color: #5f6368;
+        }
+
+        .btn-upload {
+            background: var(--secondary);
+            box-shadow: 0 4px 6px rgba(52, 168, 83, 0.2);
+            font-size: 14px;
+            padding: 12px;
+        }
+
+        .btn-upload:hover { background: #2d9249; box-shadow: 0 6px 12px rgba(52, 168, 83, 0.3); }
+
+        .status { 
+            margin-top: 20px; 
+            text-align: center; 
+            color: var(--secondary); 
+            font-weight: bold; 
+            display: none; 
+            padding: 10px;
+            background: #e6f4ea;
+            border-radius: 8px;
+        }
+
+        .shortcuts {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #9aa0a6;
+        }
+
+        kbd {
+            background: #eee;
+            border-radius: 3px;
+            padding: 2px 6px;
+            border: 1px solid #ccc;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
 <div class="card">
-    <h1>DRAKKAR</h1>
+    <h1>Le Drakkar</h1>
     
     <div class="group">
-        <label>Capacité (Pers/Heure)</label>
-        <input type="number" id="capa">
+        <label>Capacité horaire (personnes/h)</label>
+        <input type="number" id="capa" placeholder="Ex: 800">
     </div>
 
     <div class="group">
-        <label>Message à l'écran</label>
-        <textarea id="msg" rows="3"></textarea>
+        <label>Message informatif écran</label>
+        <textarea id="msg" rows="3" placeholder="Tapez votre message ici..."></textarea>
     </div>
 
-    <button onclick="envoyer()">Mettre à jour l'attraction</button>
+    <button onclick="envoyer()">METTRE À JOUR L'ÉCRAN</button>
 
-    <div class="group" style="margin-top: 25px; border-top: 1px solid #ddd; padding-top: 20px;">
-        <label>Changer Musique Ambiance (.mp3)</label>
+    <div class="music-section">
+        <label>Nouvelle bande son (.mp3)</label>
         <input type="file" id="musicFile" accept=".mp3">
-        <button id="btnUpload" style="background: #34a853; font-size: 14px; padding: 10px;">Uploader la musique</button>
+        <button id="btnUpload" class="btn-upload">CHANGER LA MUSIQUE</button>
     </div>
 
-    <div id="status" class="status">✅ Opération réussie !</div>
-    <p style="font-size: 11px; color: #888; text-align: center;">Touches Test : (S)écurité | (T)echnique | (F)ermeture</p>
+    <div id="status" class="status">✅ Synchronisation terminée !</div>
+    
+    <div class="shortcuts">
+        Tests distance : <kbd>S</kbd> Sécu | <kbd>T</kbd> Tech | <kbd>F</kbd> Fermeture
+    </div>
 </div>
 
 <script type="module">
@@ -33,7 +180,7 @@
         authDomain: "attraction-info.firebaseapp.com",
         databaseURL: "https://attraction-info-default-rtdb.europe-west1.firebasedatabase.app",
         projectId: "attraction-info",
-        storageBucket: "attraction-info.appspot.com", // Vérifie bien ce lien dans ta console Firebase
+        storageBucket: "attraction-info.appspot.com",
         messagingSenderId: "335011135222",
         appId: "1:335011135222:web:db513acd348e55e20c76d7"
     };
@@ -43,16 +190,17 @@
     const storage = getStorage(app);
     const drakkarRef = ref(db, 'attractions/DRAKKAR');
 
-    // 1. CHARGEMENT AUTOMATIQUE DES DONNÉES EXISTANTES
+    // Récupération automatique des données pour ne pas avoir les cases vides ou par défaut
     onValue(drakkarRef, (snapshot) => {
         const data = snapshot.val();
         if (data) {
-            document.getElementById('capa').value = data.capa_heure || 800;
-            document.getElementById('msg').value = data.info_message || "";
+            if (!document.activeElement || document.activeElement.id !== 'capa') 
+                document.getElementById('capa').value = data.capa_heure || "";
+            if (!document.activeElement || document.activeElement.id !== 'msg')
+                document.getElementById('msg').value = data.info_message || "";
         }
     });
 
-    // 2. ENVOI DES TEXTES
     window.envoyer = function() {
         update(drakkarRef, {
             capa_heure: parseInt(document.getElementById('capa').value),
@@ -60,29 +208,42 @@
         }).then(showSuccess);
     }
 
-    // 3. UPLOAD MUSIQUE
     document.getElementById('btnUpload').onclick = function() {
         const file = document.getElementById('musicFile').files[0];
-        if(!file) return alert("Choisis un fichier MP3");
+        if(!file) return alert("Veuillez choisir un fichier MP3.");
         
-        this.innerText = "Téléchargement...";
+        const originalText = this.innerText;
+        this.innerText = "CHARGEMENT...";
+        this.disabled = true;
+
         const musicRef = sRef(storage, 'musique_ambiance_drakkar.mp3');
         
         uploadBytes(musicRef, file).then(() => {
             getDownloadURL(musicRef).then((url) => {
-                update(drakkarRef, { music_url: url, update_music: Date.now() });
-                this.innerText = "Uploader la musique";
+                update(drakkarRef, { 
+                    music_url: url, 
+                    update_trigger: Date.now() 
+                });
+                this.innerText = originalText;
+                this.disabled = false;
                 showSuccess();
             });
+        }).catch(err => {
+            alert("Erreur upload: " + err.message);
+            this.innerText = originalText;
+            this.disabled = false;
         });
     }
 
-    // 4. TOUCHES CLAVIER POUR TEST
+    // Touches clavier pour tests
     window.addEventListener('keydown', (e) => {
+        if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA") return;
+        
         let cmd = null;
-        if(e.key.toLowerCase() === 's') cmd = "SECURITE";
-        if(e.key.toLowerCase() === 't') cmd = "TECHNIQUE";
-        if(e.key.toLowerCase() === 'f') cmd = "FERMETURE";
+        const key = e.key.toLowerCase();
+        if(key === 's') cmd = "SECURITE";
+        if(key === 't') cmd = "TECHNIQUE";
+        if(key === 'f') cmd = "FERMETURE";
         
         if(cmd) {
             update(drakkarRef, { commande_test: cmd, trigger_time: Date.now() });
@@ -96,3 +257,6 @@
         setTimeout(() => { status.style.display = 'none'; }, 3000);
     }
 </script>
+
+</body>
+</html>
