@@ -44,6 +44,7 @@
         }
 
         .group { margin-bottom: 25px; }
+        .row { display: flex; gap: 15px; align-items: center; }
 
         label { 
             display: block; 
@@ -91,27 +92,11 @@
             box-shadow: 0 6px 12px rgba(26, 115, 232, 0.3);
         }
 
-        /* Section Musique */
         .music-section {
             margin-top: 30px;
             padding-top: 25px;
             border-top: 1px dashed #ddd;
         }
-
-        input[type="file"] {
-            font-size: 13px;
-            margin-bottom: 10px;
-            color: #5f6368;
-        }
-
-        .btn-upload {
-            background: var(--secondary);
-            box-shadow: 0 4px 6px rgba(52, 168, 83, 0.2);
-            font-size: 14px;
-            padding: 12px;
-        }
-
-        .btn-upload:hover { background: #2d9249; box-shadow: 0 6px 12px rgba(52, 168, 83, 0.3); }
 
         .status { 
             margin-top: 20px; 
@@ -155,12 +140,20 @@
         <textarea id="msg" rows="3" placeholder="Tapez votre message ici..."></textarea>
     </div>
 
+    <div class="group">
+        <label>Intervalle diffusion consignes sécurité</label>
+        <div class="row">
+            <input type="number" id="int_h" placeholder="H" min="0" max="23"> <span>h</span>
+            <input type="number" id="int_m" placeholder="M" min="0" max="59"> <span>min</span>
+        </div>
+    </div>
+
     <button onclick="envoyer()">METTRE À JOUR L'ÉCRAN</button>
 
     <div class="music-section">
         <label>Nouvelle bande son (.mp3)</label>
         <input type="file" id="musicFile" accept=".mp3">
-        <button id="btnUpload" class="btn-upload">CHANGER LA MUSIQUE</button>
+        <button id="btnUpload" style="background: var(--secondary); margin-top:10px;">CHANGER LA MUSIQUE</button>
     </div>
 
     <div id="status" class="status">✅ Synchronisation terminée !</div>
@@ -190,66 +183,49 @@
     const storage = getStorage(app);
     const drakkarRef = ref(db, 'attractions/DRAKKAR');
 
-    // Récupération automatique des données pour ne pas avoir les cases vides ou par défaut
     onValue(drakkarRef, (snapshot) => {
         const data = snapshot.val();
         if (data) {
-            if (!document.activeElement || document.activeElement.id !== 'capa') 
-                document.getElementById('capa').value = data.capa_heure || "";
-            if (!document.activeElement || document.activeElement.id !== 'msg')
-                document.getElementById('msg').value = data.info_message || "";
+            if (document.activeElement.id !== 'capa') document.getElementById('capa').value = data.capa_heure || 800;
+            if (document.activeElement.id !== 'msg') document.getElementById('msg').value = data.info_message || "";
+            
+            // Calculer H/M depuis secondes stockées
+            let totalSec = data.intervalle_secu || 120;
+            document.getElementById('int_h').value = Math.floor(totalSec / 3600);
+            document.getElementById('int_m').value = Math.floor((totalSec % 3600) / 60);
         }
     });
 
     window.envoyer = function() {
+        let h = parseInt(document.getElementById('int_h').value) || 0;
+        let m = parseInt(document.getElementById('int_m').value) || 0;
+        let totalSec = (h * 3600) + (m * 60);
+        if (totalSec < 30) totalSec = 30; // Minimum 30s de sécurité
+
         update(drakkarRef, {
             capa_heure: parseInt(document.getElementById('capa').value),
-            info_message: document.getElementById('msg').value
+            info_message: document.getElementById('msg').value,
+            intervalle_secu: totalSec
         }).then(showSuccess);
     }
 
     document.getElementById('btnUpload').onclick = function() {
         const file = document.getElementById('musicFile').files[0];
         if(!file) return alert("Veuillez choisir un fichier MP3.");
-        
         const originalText = this.innerText;
         this.innerText = "CHARGEMENT...";
         this.disabled = true;
 
         const musicRef = sRef(storage, 'musique_ambiance_drakkar.mp3');
-        
         uploadBytes(musicRef, file).then(() => {
             getDownloadURL(musicRef).then((url) => {
-                update(drakkarRef, { 
-                    music_url: url, 
-                    update_trigger: Date.now() 
-                });
+                update(drakkarRef, { music_url: url, update_trigger: Date.now() });
                 this.innerText = originalText;
                 this.disabled = false;
                 showSuccess();
             });
-        }).catch(err => {
-            alert("Erreur upload: " + err.message);
-            this.innerText = originalText;
-            this.disabled = false;
         });
     }
-
-    // Touches clavier pour tests
-    window.addEventListener('keydown', (e) => {
-        if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA") return;
-        
-        let cmd = null;
-        const key = e.key.toLowerCase();
-        if(key === 's') cmd = "SECURITE";
-        if(key === 't') cmd = "TECHNIQUE";
-        if(key === 'f') cmd = "FERMETURE";
-        
-        if(cmd) {
-            update(drakkarRef, { commande_test: cmd, trigger_time: Date.now() });
-            showSuccess();
-        }
-    });
 
     function showSuccess() {
         const status = document.getElementById('status');
@@ -257,6 +233,5 @@
         setTimeout(() => { status.style.display = 'none'; }, 3000);
     }
 </script>
-
 </body>
 </html>
