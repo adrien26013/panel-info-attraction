@@ -1,73 +1,98 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel info attraction</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #eef2f7; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 90%; max-width: 400px; }
-        h1 { color: #1a73e8; text-align: center; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 2px; }
-        .group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: 600; color: #444; }
-        input, textarea { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; outline: none; transition: 0.3s; }
-        input:focus, textarea:focus { border-color: #1a73e8; }
-        button { width: 100%; background: #1a73e8; color: white; border: none; padding: 15px; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
-        button:hover { background: #1557b0; transform: translateY(-2px); }
-        .status { margin-top: 20px; text-align: center; color: #2ecc71; font-weight: bold; display: none; }
-    </style>
-</head>
-<body>
-
 <div class="card">
     <h1>DRAKKAR</h1>
     
     <div class="group">
         <label>Capacité (Pers/Heure)</label>
-        <input type="number" id="capa" value="800">
+        <input type="number" id="capa">
     </div>
 
     <div class="group">
         <label>Message à l'écran</label>
-        <textarea id="msg" rows="3">Bienvenue au Drakkar !</textarea>
+        <textarea id="msg" rows="3"></textarea>
     </div>
 
     <button onclick="envoyer()">Mettre à jour l'attraction</button>
-    <div id="status" class="status">✅ Écran mis à jour !</div>
+
+    <div class="group" style="margin-top: 25px; border-top: 1px solid #ddd; padding-top: 20px;">
+        <label>Changer Musique Ambiance (.mp3)</label>
+        <input type="file" id="musicFile" accept=".mp3">
+        <button id="btnUpload" style="background: #34a853; font-size: 14px; padding: 10px;">Uploader la musique</button>
+    </div>
+
+    <div id="status" class="status">✅ Opération réussie !</div>
+    <p style="font-size: 11px; color: #888; text-align: center;">Touches Test : (S)écurité | (T)echnique | (F)ermeture</p>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, update, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDWob3NIJTPxrdpreSpDr__eaPJA2ZCTl0",
         authDomain: "attraction-info.firebaseapp.com",
         databaseURL: "https://attraction-info-default-rtdb.europe-west1.firebasedatabase.app",
         projectId: "attraction-info",
-        storageBucket: "attraction-info.firebasestorage.app",
+        storageBucket: "attraction-info.appspot.com", // Vérifie bien ce lien dans ta console Firebase
         messagingSenderId: "335011135222",
         appId: "1:335011135222:web:db513acd348e55e20c76d7"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+    const storage = getStorage(app);
+    const drakkarRef = ref(db, 'attractions/DRAKKAR');
 
+    // 1. CHARGEMENT AUTOMATIQUE DES DONNÉES EXISTANTES
+    onValue(drakkarRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            document.getElementById('capa').value = data.capa_heure || 800;
+            document.getElementById('msg').value = data.info_message || "";
+        }
+    });
+
+    // 2. ENVOI DES TEXTES
     window.envoyer = function() {
-        const capaValue = document.getElementById('capa').value;
-        const msgValue = document.getElementById('msg').value;
+        update(drakkarRef, {
+            capa_heure: parseInt(document.getElementById('capa').value),
+            info_message: document.getElementById('msg').value
+        }).then(showSuccess);
+    }
 
-        // On garde DRAKKAR_01 ici pour que la liaison avec le Raspberry ne coupe pas
-        update(ref(db, 'attractions/DRAKKAR'), {
-            capa_heure: parseInt(capaValue),
-            info_message: msgValue
-        }).then(() => {
-            const status = document.getElementById('status');
-            status.style.display = 'block';
-            setTimeout(() => { status.style.display = 'none'; }, 3000);
+    // 3. UPLOAD MUSIQUE
+    document.getElementById('btnUpload').onclick = function() {
+        const file = document.getElementById('musicFile').files[0];
+        if(!file) return alert("Choisis un fichier MP3");
+        
+        this.innerText = "Téléchargement...";
+        const musicRef = sRef(storage, 'musique_ambiance_drakkar.mp3');
+        
+        uploadBytes(musicRef, file).then(() => {
+            getDownloadURL(musicRef).then((url) => {
+                update(drakkarRef, { music_url: url, update_music: Date.now() });
+                this.innerText = "Uploader la musique";
+                showSuccess();
+            });
         });
     }
-</script>
 
-</body>
-</html>
+    // 4. TOUCHES CLAVIER POUR TEST
+    window.addEventListener('keydown', (e) => {
+        let cmd = null;
+        if(e.key.toLowerCase() === 's') cmd = "SECURITE";
+        if(e.key.toLowerCase() === 't') cmd = "TECHNIQUE";
+        if(e.key.toLowerCase() === 'f') cmd = "FERMETURE";
+        
+        if(cmd) {
+            update(drakkarRef, { commande_test: cmd, trigger_time: Date.now() });
+            showSuccess();
+        }
+    });
+
+    function showSuccess() {
+        const status = document.getElementById('status');
+        status.style.display = 'block';
+        setTimeout(() => { status.style.display = 'none'; }, 3000);
+    }
+</script>
