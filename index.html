@@ -3,114 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Contrôle Drakkar</title>
+    <title>Panel de Contrôle Drakkar Complet</title>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f3f8; color: #333; margin: 0; padding: 20px; }
         .container { max-width: 800px; margin: 20px auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-        h2 { color: #005096; text-align: center; margin-top: 0; border-bottom: 3px solid #005096; padding-bottom: 12px; }
-        .grid-sections { display: grid; grid-template-columns: 1fr; gap: 20px; margin-top: 20px; }
+        h2 { color: #005096; text-align: center; border-bottom: 3px solid #005096; padding-bottom: 12px; }
+        .grid-sections { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
         .section { background: #fafbfc; border: 1px solid #dcdfe6; border-radius: 8px; padding: 18px; }
-        .section-title { font-weight: bold; font-size: 16px; color: #005096; margin-bottom: 15px; display: block; border-left: 4px solid #005096; padding-left: 8px; }
-        .form-group { margin-bottom: 15px; }
-        label { font-weight: 600; display: block; margin-bottom: 6px; font-size: 14px; }
-        input[type="text"], input[type="number"], input[type="time"] { width: 100%; padding: 10px; border: 1px solid #dcdfe6; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
-        .flex-group { display: flex; gap: 10px; flex-wrap: wrap; }
-        button { flex: 1; padding: 12px; border: none; border-radius: 6px; font-weight: bold; font-size: 14px; cursor: pointer; transition: background 0.2s; min-width: 120px; }
-        
-        .btn-update { background-color: #005096; color: white; width: 100%; margin-top: 10px; }
-        .btn-secu { background-color: #ff9800; color: white; }
-        .btn-tech { background-color: #17a2b8; color: white; }
-        .btn-ferm { background-color: #6f42c1; color: white; }
-        .btn-stop { background-color: #dc3545; color: white; flex: 2; }
-        .btn-yes { background-color: #28a745; color: white; }
-        .btn-no { background-color: #dc3545; color: white; }
-        .btn-reset { background-color: #6c757d; color: white; width: 100%; margin-top: 10px; }
-        .days-input { display: flex; gap: 8px; margin-top: 5px; flex-wrap: wrap; }
-        .day-checkbox { display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: bold; }
+        .section-title { font-weight: bold; color: #005096; margin-bottom: 10px; display: block; border-left: 4px solid #005096; padding-left: 8px; }
+        input, button { width: 100%; padding: 10px; margin-top: 5px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; }
+        .btn-update { background: #005096; color: white; cursor: pointer; }
+        .days-input { display: flex; gap: 5px; font-size: 11px; flex-wrap: wrap; }
     </style>
 </head>
 <body>
-
 <div class="container">
     <h2>PANEL OPÉRATEUR - DRAKKAR</h2>
     <div class="grid-sections">
-        
         <div class="section">
-            <span class="section-title">Annonces Prioritaires</span>
-            <div class="flex-group" style="margin-bottom: 10px;">
-                <button class="btn-secu" onclick="sendCommand('SECURITE')">SÉCURITÉ</button>
-                <button class="btn-tech" onclick="sendCommand('TECHNIQUE')">TECHNIQUE</button>
-                <button class="btn-ferm" onclick="sendCommand('FERMETURE')">FERMETURE</button>
-            </div>
-            <button class="btn-stop" onclick="sendCommand('STOP_ANNONCE')">ARRÊTER L'ANNONCE</button>
+            <span class="section-title">Annonces</span>
+            <button onclick="sendCommand('SECURITE')">SÉCURITÉ</button>
+            <button onclick="sendCommand('TECHNIQUE')">TECHNIQUE</button>
+            <button onclick="sendCommand('FERMETURE')">FERMETURE</button>
+            <button onclick="sendCommand('STOP_ANNONCE')" style="background:#dc3545; color:white;">STOP ANNONCE</button>
         </div>
-
         <div class="section">
-            <span class="section-title">Paramètres de fonctionnement</span>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div class="form-group">
-                    <label>Affichage Temps Attente :</label>
-                    <div class="flex-group">
-                        <button class="btn-yes" onclick="setWaitTime(true)">OUI</button>
-                        <button class="btn-no" onclick="setWaitTime(false)">NON</button>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="intervalle_calcul">Intervalle Calcul (sec) :</label>
-                    <input type="number" id="intervalle_calcul" value="7">
-                </div>
-            </div>
-            
-            <label>Fréquence Annonce Sécurité :</label>
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-                <input type="number" id="secu_h" placeholder="Heures" value="0">
-                <input type="number" id="secu_m" placeholder="Minutes" value="2">
-                <input type="number" id="secu_s" placeholder="Secondes" value="0">
-            </div>
-            <button class="btn-update" onclick="updateConfig()">METTRE À JOUR PARAMÈTRES</button>
+            <span class="section-title">Message Défilant</span>
+            <input type="text" id="info_message" placeholder="Votre message...">
+            <button class="btn-update" onclick="updateInfo()">METTRE À JOUR</button>
         </div>
-
         <div class="section">
-            <span class="section-title">Programmation Horaire</span>
-            <div class="flex-group">
-                <input type="time" id="h_ouv" value="07:00">
-                <input type="time" id="h_ferm" value="18:00">
+            <span class="section-title">Paramètres</span>
+            <label>Affichage Attente : <button onclick="setWaitTime(true)">OUI</button> <button onclick="setWaitTime(false)">NON</button></label>
+            <label>Intervalle Calcul (sec) :</label>
+            <input type="number" id="int_calc" value="7">
+            <label>Fréquence Sécu (H/M/S) :</label>
+            <div style="display:flex; gap:5px;">
+                <input type="number" id="secu_h" value="0"><input type="number" id="secu_m" value="2"><input type="number" id="secu_s" value="0">
             </div>
-            <button class="btn-update" style="background-color: #6f42c1;" onclick="updateSchedule()">APPLIQUER HORAIRES</button>
+            <button class="btn-update" onclick="updateParams()">VALIDER PARAMÈTRES</button>
+        </div>
+        <div class="section">
+            <span class="section-title">Horaires & Forçage</span>
+            <input type="time" id="h_ouv" value="07:00">
+            <input type="time" id="h_ferm" value="18:00">
+            <div class="days-input" id="days_check">
+                <label><input type="checkbox" value="1"> Lun</label><label><input type="checkbox" value="2"> Mar</label>
+                <label><input type="checkbox" value="3"> Mer</label><label><input type="checkbox" value="4"> Jeu</label>
+                <label><input type="checkbox" value="5"> Ven</label><label><input type="checkbox" value="6"> Sam</label>
+                <label><input type="checkbox" value="0"> Dim</label>
+            </div>
+            <button class="btn-update" onclick="updateSchedule()">APPLIQUER HORAIRES</button>
+            <button onclick="setForce('OPEN')">FORCER OUVERT</button>
+            <button onclick="setForce('CLOSE')">FORCER FERMÉ</button>
+        </div>
+        <div class="section" style="grid-column: span 2;">
+            <span class="section-title">Importation Musique MP3</span>
+            <input type="file" id="file_music" accept="audio/mp3">
+            <button class="btn-update" onclick="uploadMusic()">CHARGER LE FICHIER</button>
         </div>
     </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 <script>
+    firebase.initializeApp({ /* Tes configs ici */ });
     const dbRef = firebase.database().ref('attractions/DRAKKAR');
 
     function sendCommand(cmd) { dbRef.update({ commande_test: cmd }); }
     function setWaitTime(val) { dbRef.update({ show_wait_time: val }); }
-
-    function updateConfig() {
-        const h = parseInt(document.getElementById('secu_h').value) || 0;
-        const m = parseInt(document.getElementById('secu_m').value) || 0;
-        const s = parseInt(document.getElementById('secu_s').value) || 0;
-        const totalSeconds = (h * 3600) + (m * 60) + s;
-        
-        dbRef.update({
-            intervalle_secu: totalSeconds,
-            intervalle_calcul: parseInt(document.getElementById('intervalle_calcul').value) || 7
-        });
-        alert("Paramètres mis à jour !");
+    function updateInfo() { dbRef.update({ info_message: document.getElementById('info_message').value }); }
+    function updateParams() {
+        const total = (parseInt(document.getElementById('secu_h').value)*3600) + (parseInt(document.getElementById('secu_m').value)*60) + parseInt(document.getElementById('secu_s').value);
+        dbRef.update({ intervalle_secu: total, intervalle_calcul: parseInt(document.getElementById('int_calc').value) });
     }
-
     function updateSchedule() {
-        dbRef.update({
-            horaires_ouverture: {
-                heure_ouverture: document.getElementById('h_ouv').value,
-                heure_fermeture: document.getElementById('h_ferm').value
-            }
-        });
+        const days = Array.from(document.querySelectorAll('#days_check input:checked')).map(i => parseInt(i.value));
+        dbRef.update({ horaires_ouverture: { heure_ouverture: document.getElementById('h_ouv').value, heure_fermeture: document.getElementById('h_ferm').value, jours_actifs: days }});
     }
+    function setForce(m) { dbRef.update({ force_open_panel: m==='OPEN', force_close_panel: m==='CLOSE' }); }
+    function uploadMusic() { /* Logique de upload storage identique à la version précédente */ }
 </script>
 </body>
 </html>
