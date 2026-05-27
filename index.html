@@ -5,18 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Drakkar - Gestion Attraction</title>
     <style>
-        :root { --primary: #1a73e8; --secondary: #34a853; --bg: #f0f2f5; --dark: #202124; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .card { background: white; padding: 40px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); width: 100%; max-width: 480px; }
+        :root { --primary: #1a73e8; --secondary: #34a853; --warning: #fbbc04; --danger: #ea4335; --bg: #f0f2f5; --dark: #202124; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        .card { background: white; padding: 40px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); width: 100%; max-width: 520px; }
         h1 { color: var(--dark); text-align: center; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 3px; font-size: 24px; border-bottom: 2px solid var(--primary); padding-bottom: 10px; }
+        h2 { font-size: 16px; color: var(--dark); margin-top: 20px; margin-bottom: 15px; border-left: 4px solid var(--primary); padding-left: 8px; }
         .group { margin-bottom: 25px; }
         .row { display: flex; gap: 10px; align-items: center; }
+        .grid-tests { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 25px; }
         label { display: block; margin-bottom: 10px; font-weight: 600; color: #5f6368; font-size: 14px; }
-        input[type="number"], textarea { width: 100%; padding: 14px; border: 2px solid #e0e0e0; border-radius: 12px; box-sizing: border-box; font-size: 16px; outline: none; transition: all 0.3s ease; background: #f8f9fa; }
+        input[type="number"], input[type="time"], select, textarea { width: 100%; padding: 14px; border: 2px solid #e0e0e0; border-radius: 12px; box-sizing: border-box; font-size: 16px; outline: none; transition: all 0.3s ease; background: #f8f9fa; }
         .row input[type="number"] { text-align: center; padding: 10px; }
         button { width: 100%; background: var(--primary); color: white; border: none; padding: 16px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.3s; margin-top: 10px; }
         button:hover { background: #1557b0; transform: translateY(-2px); }
-        .music-section { margin-top: 30px; padding-top: 25px; border-top: 1px dashed #ddd; }
+        .btn-test { padding: 12px 5px; font-size: 13px; margin-top: 0; }
+        .btn-danger { background: var(--danger); } .btn-danger:hover { background: #c53026; }
+        .btn-warning { background: var(--warning); color: #000; } .btn-warning:hover { background: #dfa503; }
+        .btn-dark { background: var(--dark); } .btn-dark:hover { background: #000; }
+        .music-section, .scheduler-section { margin-top: 30px; padding-top: 25px; border-top: 1px dashed #ddd; }
+        .days-select { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .day-checkbox { display: none; }
+        .day-label { padding: 8px 12px; background: #e8eaed; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; user-select: none; transition: 0.2s; }
+        .day-checkbox:checked + .day-label { background: var(--primary); color: white; }
+        .schedule-list { margin-top: 15px; max-height: 150px; overflow-y: auto; background: #f8f9fa; border-radius: 12px; padding: 10px; border: 1px solid #e0e0e0; }
+        .schedule-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px 12px; border-radius: 8px; margin-bottom: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-size: 13px; }
+        .btn-delete { width: auto; margin-top: 0; padding: 6px 10px; background: var(--danger); font-size: 12px; border-radius: 6px; }
         .status { margin-top: 20px; text-align: center; color: var(--secondary); font-weight: bold; display: none; padding: 10px; background: #e6f4ea; border-radius: 8px; }
     </style>
 </head>
@@ -25,6 +38,13 @@
 <div class="card">
     <h1>Le Drakkar</h1>
     
+    <label>Commandes de test instantanées</label>
+    <div class="grid-tests">
+        <button class="btn-test btn-danger" onclick="declencherTest('SECURITE')">SÉCURITÉ</button>
+        <button class="btn-test btn-warning" onclick="declencherTest('TECHNIQUE')">TECHNIQUE</button>
+        <button class="btn-test btn-dark" onclick="declencherTest('FERMETURE')">FERMETURE</button>
+    </div>
+
     <div class="group">
         <label>Capacité horaire (personnes/h)</label>
         <input type="number" id="capa" placeholder="800">
@@ -54,6 +74,38 @@
 
     <button onclick="envoyer()">METTRE À JOUR L'ÉCRAN</button>
 
+    <div class="scheduler-section">
+        <h2>Planification d'Annonces automatiques</h2>
+        <div class="group">
+            <label>Type d'action / vidéo</label>
+            <select id="sched_type">
+                <option value="SECURITE">Consignes de Sécurité</option>
+                <option value="TECHNIQUE">Intervention Technique</option>
+                <option value="FERMETURE">Annonce de Fermeture</option>
+            </select>
+        </div>
+        <div class="group">
+            <label>Heure de déclenchement</label>
+            <input type="time" id="sched_time" value="12:00">
+        </div>
+        <div class="group">
+            <label>Jours d'activation</label>
+            <div class="days-select">
+                <input type="checkbox" id="d1" class="day-checkbox" value="1"><label for="d1" class="day-label">Lun</label>
+                <input type="checkbox" id="d2" class="day-checkbox" value="2"><label for="d2" class="day-label">Mar</label>
+                <input type="checkbox" id="d3" class="day-checkbox" value="3"><label for="d3" class="day-label">Mer</label>
+                <input type="checkbox" id="d4" class="day-checkbox" value="4"><label for="d4" class="day-label">Jeu</label>
+                <input type="checkbox" id="d5" class="day-checkbox" value="5"><label for="d5" class="day-label">Ven</label>
+                <input type="checkbox" id="d6" class="day-checkbox" value="6"><label for="d6" class="day-label">Sam</label>
+                <input type="checkbox" id="d0" class="day-checkbox" value="0"><label for="d0" class="day-label">Dim</label>
+            </div>
+        </div>
+        <button id="btnAddSchedule" style="background: var(--dark);">AJOUTER À LA PROGRAMMATION</button>
+        
+        <div class="schedule-list" id="scheduleList">
+            </div>
+    </div>
+
     <div class="music-section">
         <label>Nouvelle bande son (.mp3)</label>
         <input type="file" id="musicFile" accept=".mp3">
@@ -81,6 +133,8 @@
     const storage = getStorage(app);
     const drakkarRef = ref(db, 'attractions/DRAKKAR');
 
+    let currentSchedules = {};
+
     // Récupération des données en temps réel
     onValue(drakkarRef, (snapshot) => {
         const data = snapshot.val();
@@ -96,10 +150,21 @@
             let secCalc = data.intervalle_calcul || 7;
             document.getElementById('calc_m').value = Math.floor(secCalc / 60);
             document.getElementById('calc_s').value = secCalc % 60;
+
+            // Charger le planning
+            currentSchedules = data.planning || {};
+            renderScheduleList(currentSchedules);
         }
     });
 
-    // Mise à jour des réglages
+    // Déclencher un bouton de test instantané
+    window.declencherTest = function(typeCommande) {
+        update(drakkarRef, {
+            commande_test: typeCommande
+        }).then(showSuccess);
+    };
+
+    // Mise à jour des réglages généraux
     window.envoyer = function() {
         let totalSecu = (parseInt(document.getElementById('int_h').value) || 0) * 3600 + (parseInt(document.getElementById('int_m').value) || 0) * 60 + (parseInt(document.getElementById('int_s').value) || 0);
         let totalCalc = (parseInt(document.getElementById('calc_m').value) || 0) * 60 + (parseInt(document.getElementById('calc_s').value) || 0);
@@ -110,43 +175,48 @@
             intervalle_secu: Math.max(10, totalSecu),
             intervalle_calcul: Math.max(3, totalCalc)
         }).then(showSuccess);
-    }
+    };
 
-    // FONCTION UPLOAD CORRIGÉE
-    document.getElementById('btnUpload').onclick = function() {
-        const file = document.getElementById('musicFile').files[0];
-        if(!file) return alert("Veuillez sélectionner un fichier MP3.");
+    // Ajouter une planification
+    document.getElementById('btnAddSchedule').onclick = function() {
+        const type = document.getElementById('sched_type').value;
+        const timeVal = document.getElementById('sched_time').value;
         
-        const btn = this;
-        btn.disabled = true;
-        btn.innerText = "CHARGEMENT...";
-
-        const musicRef = sRef(storage, 'musique_ambiance_drakkar.mp3');
-        
-        uploadBytes(musicRef, file).then(() => {
-            getDownloadURL(musicRef).then((url) => {
-                // On met à jour l'URL et on déclenche un trigger pour que le Python sache qu'il faut re-télécharger
-                update(drakkarRef, { 
-                    music_url: url, 
-                    update_trigger: Date.now() 
-                }).then(() => {
-                    btn.disabled = false;
-                    btn.innerText = "CHANGER LA MUSIQUE";
-                    showSuccess();
-                });
-            });
-        }).catch(err => {
-            alert("Erreur d'upload : " + err.message);
-            btn.disabled = false;
-            btn.innerText = "CHANGER LA MUSIQUE";
+        let checkedDays = [];
+        document.querySelectorAll('.day-checkbox:checked').forEach(cb => {
+            checkedDays.push(parseInt(cb.value));
         });
-    }
 
-    function showSuccess() { 
-        const s = document.getElementById('status'); 
-        s.style.display='block'; 
-        setTimeout(()=>s.style.display='none', 3000); 
-    }
-</script>
-</body>
-</html>
+        if(checkedDays.length === 0) return alert("Veuillez cocher au moins un jour.");
+        if(!timeVal) return alert("Veuillez sélectionner une heure.");
+
+        const scheduleId = "sched_" + Date.now();
+        currentSchedules[scheduleId] = {
+            id: scheduleId,
+            type: type,
+            time: timeVal,
+            days: checkedDays
+        };
+
+        update(drakkarRef, { planning: currentSchedules }).then(() => {
+            // Uncheck days
+            document.querySelectorAll('.day-checkbox').forEach(cb => cb.checked = false);
+            showSuccess();
+        });
+    };
+
+    // Supprimer une planification
+    window.deleteSchedule = function(id) {
+        delete currentSchedules[id];
+        // Si le planning devient vide, envoyer un objet vide à Firebase
+        update(drakkarRef, { planning: currentSchedules });
+    };
+
+    function renderScheduleList(schedules) {
+        const container = document.getElementById('scheduleList');
+        container.innerHTML = "";
+        const dayNames = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+        
+        const keys = Object.keys(schedules);
+        if(keys.length === 0) {
+            container.innerHTML = "<div style='text-align:center;color:#888;font-size:13
