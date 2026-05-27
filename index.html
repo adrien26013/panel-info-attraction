@@ -2,17 +2,18 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Panel Drakkar | Admin</title>
+    <title>Panel Drakkar | Admin Complet</title>
     <style>
-        :root { --primary: #2563eb; --danger: #ef4444; --success: #22c55e; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f3f8; padding: 20px; }
-        .container { max-width: 900px; margin: auto; }
+        :root { --primary: #005096; --danger: #dc3545; --success: #28a745; --info: #17a2b8; --bg: #f0f3f8; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); padding: 20px; }
+        .container { max-width: 950px; margin: auto; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .card { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .card-title { font-weight: bold; color: #005096; margin-bottom: 15px; display: block; border-left: 4px solid #005096; padding-left: 8px; }
-        input, button { width: 100%; padding: 10px; margin-top: 5px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
-        .btn-update { background: #005096; color: white; cursor: pointer; }
-        .date-tag { display: inline-block; background: #e2e8f0; padding: 5px 10px; border-radius: 5px; margin: 2px; cursor: pointer; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .card-title { font-weight: bold; color: var(--primary); margin-bottom: 15px; display: block; border-left: 4px solid var(--primary); padding-left: 8px; }
+        input, button { width: 100%; padding: 10px; margin-top: 5px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; }
+        .btn-update { background: var(--primary); color: white; cursor: pointer; font-weight: bold; }
+        .days-input { display: flex; gap: 5px; font-size: 11px; flex-wrap: wrap; margin-bottom: 10px; }
+        .date-tag { display: inline-block; background: #e2e8f0; padding: 4px 8px; border-radius: 4px; margin: 2px; font-size: 12px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -25,28 +26,54 @@
             <button onclick="sendCommand('SECURITE')">SÉCURITÉ</button>
             <button onclick="sendCommand('TECHNIQUE')">TECHNIQUE</button>
             <button onclick="sendCommand('FERMETURE')">FERMETURE</button>
-            <button onclick="sendCommand('STOP_ANNONCE')" style="background:var(--danger); color:white;">STOP TOUT</button>
+            <button onclick="sendCommand('STOP_ANNONCE')" style="background:var(--danger); color:white;">ARRÊTER ANNONCE</button>
         </div>
 
         <div class="card">
             <span class="card-title">📅 Planning & Dates</span>
-            <input type="time" id="h_ouv" value="07:00">
-            <input type="time" id="h_ferm" value="18:00">
+            <div style="display:flex; gap:5px;">
+                <input type="time" id="h_ouv" value="07:00">
+                <input type="time" id="h_ferm" value="18:00">
+            </div>
+            <div class="days-input" id="days_check">
+                <label><input type="checkbox" value="1"> Lun</label><label><input type="checkbox" value="2"> Mar</label>
+                <label><input type="checkbox" value="3"> Mer</label><label><input type="checkbox" value="4"> Jeu</label>
+                <label><input type="checkbox" value="5"> Ven</label><label><input type="checkbox" value="6"> Sam</label>
+                <label><input type="checkbox" value="0"> Dim</label>
+            </div>
             <input type="date" id="date_input">
-            <button onclick="addDate()">AJOUTER DATE</button>
+            <button onclick="addDate()">AJOUTER DATE SPÉCIALE</button>
             <div id="date_list" style="margin:10px 0;"></div>
-            <button class="btn-update" onclick="updateSchedule()">APPLIQUER PLANNING</button>
+            <button class="btn-update" onclick="updateSchedule()">VALIDER PLANNING</button>
+            <div style="display:flex; gap:5px; margin-top:10px;">
+                <button onclick="setForce('OPEN')" style="background:var(--success); color:white;">FORCER OUVERT</button>
+                <button onclick="setForce('CLOSE')" style="background:var(--danger); color:white;">FORCER FERMÉ</button>
+            </div>
         </div>
 
         <div class="card">
-            <span class="card-title">⚙️ Paramètres</span>
+            <span class="card-title">⚙️ Paramètres & Musique</span>
             <label>Affichage Attente :</label>
-            <div style="display:flex; gap:5px;">
+            <div style="display:flex; gap:5px; margin-bottom:10px;">
                 <button onclick="setWaitTime(true)">OUI</button>
                 <button onclick="setWaitTime(false)">NON</button>
             </div>
             <input type="number" id="int_calc" placeholder="Intervalle calcul (s)">
-            <button class="btn-update" onclick="updateParams()">SAUVEGARDER</button>
+            <div style="display:flex; gap:5px;">
+                <input type="number" id="secu_h" placeholder="H" value="0">
+                <input type="number" id="secu_m" placeholder="M" value="2">
+                <input type="number" id="secu_s" placeholder="S" value="0">
+            </div>
+            <button class="btn-update" onclick="updateParams()">VALIDER PARAMÈTRES</button>
+            <hr style="margin:15px 0;">
+            <input type="file" id="file_music" accept="audio/mp3">
+            <button class="btn-update" onclick="uploadMusic()" style="background:var(--info);">CHARGER MUSIQUE MP3</button>
+        </div>
+
+        <div class="card" style="grid-column: span 1;">
+            <span class="card-title">📝 Message Défilant</span>
+            <input type="text" id="info_message" placeholder="Votre texte ici...">
+            <button class="btn-update" onclick="updateInfo()">METTRE À JOUR</button>
         </div>
     </div>
 </div>
@@ -54,6 +81,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
     import { getDatabase, ref, update } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+    import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDWob3NIJTPxrdpreSpDr__eaPJA2ZCTl0",
@@ -65,41 +93,49 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const dbRef = ref(db, 'attractions/DRAKKAR');
+    const storage = getStorage(app);
 
     let selectedDates = [];
 
     window.addDate = () => {
         const d = document.getElementById('date_input').value;
-        if(d && !selectedDates.includes(d)) {
-            selectedDates.push(d);
-            renderDates();
-        }
+        if(d && !selectedDates.includes(d)) { selectedDates.push(d); renderDates(); }
     };
 
     function renderDates() {
-        const container = document.getElementById('date_list');
-        container.innerHTML = selectedDates.map(d => `<span class="date-tag" onclick="removeDate('${d}')">${d} ✕</span>`).join('');
+        document.getElementById('date_list').innerHTML = selectedDates.map(d => 
+            `<span class="date-tag" onclick="selectedDates=selectedDates.filter(x=>x!=='${d}'); renderDates();">${d} ✕</span>`).join('');
     }
-
-    window.removeDate = (d) => {
-        selectedDates = selectedDates.filter(date => date !== d);
-        renderDates();
-    };
-
-    window.updateSchedule = () => {
-        update(dbRef, {
-            horaires_ouverture: {
-                h_ouverture: document.getElementById('h_ouv').value,
-                h_fermeture: document.getElementById('h_ferm').value,
-                dates_speciales: selectedDates
-            }
-        });
-        alert("Planning mis à jour !");
-    };
 
     window.sendCommand = (cmd) => update(dbRef, { commande_test: cmd });
     window.setWaitTime = (val) => update(dbRef, { show_wait_time: val });
-    window.updateParams = () => update(dbRef, { intervalle_calcul: parseInt(document.getElementById('int_calc').value) });
+    window.setForce = (m) => update(dbRef, { force_open_panel: m==='OPEN', force_close_panel: m==='CLOSE' });
+    window.updateInfo = () => update(dbRef, { info_message: document.getElementById('info_message').value });
+    
+    window.updateParams = () => {
+        const total = (parseInt(document.getElementById('secu_h').value)*3600) + (parseInt(document.getElementById('secu_m').value)*60) + parseInt(document.getElementById('secu_s').value);
+        update(dbRef, { intervalle_secu: total, intervalle_calcul: parseInt(document.getElementById('int_calc').value) });
+    };
+
+    window.updateSchedule = () => {
+        const days = Array.from(document.querySelectorAll('#days_check input:checked')).map(i => parseInt(i.value));
+        update(dbRef, { horaires_ouverture: { 
+            heure_ouverture: document.getElementById('h_ouv').value, 
+            heure_fermeture: document.getElementById('h_ferm').value, 
+            jours_actifs: days,
+            dates_speciales: selectedDates 
+        }});
+    };
+
+    window.uploadMusic = async () => {
+        const file = document.getElementById('file_music').files[0];
+        if(!file) return alert("Sélectionnez un MP3");
+        const sRef = storageRef(storage, 'musiques/DRAKKAR_ambiance.mp3');
+        await uploadBytes(sRef, file);
+        const url = await getDownloadURL(sRef);
+        update(dbRef, { music_url: url });
+        alert("Musique envoyée !");
+    };
 </script>
 </body>
 </html>
