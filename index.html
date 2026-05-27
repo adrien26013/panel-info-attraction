@@ -95,17 +95,25 @@
     const dbRef = ref(db, 'attractions/DRAKKAR');
     const storage = getStorage(app);
 
-    let selectedDates = [];
+    window.selectedDates = [];
+
+    window.renderDates = () => {
+        document.getElementById('date_list').innerHTML = window.selectedDates.map(d => 
+            `<span class="date-tag" onclick="window.removeDate('${d}')">${d} ✕</span>`).join('');
+    };
 
     window.addDate = () => {
         const d = document.getElementById('date_input').value;
-        if(d && !selectedDates.includes(d)) { selectedDates.push(d); renderDates(); }
+        if(d && !window.selectedDates.includes(d)) { 
+            window.selectedDates.push(d); 
+            window.renderDates(); 
+        }
     };
 
-    function renderDates() {
-        document.getElementById('date_list').innerHTML = selectedDates.map(d => 
-            `<span class="date-tag" onclick="selectedDates=selectedDates.filter(x=>x!=='${d}'); renderDates();">${d} ✕</span>`).join('');
-    }
+    window.removeDate = (d) => {
+        window.selectedDates = window.selectedDates.filter(x => x !== d);
+        window.renderDates();
+    };
 
     window.sendCommand = (cmd) => update(dbRef, { commande_test: cmd });
     window.setWaitTime = (val) => update(dbRef, { show_wait_time: val });
@@ -123,7 +131,7 @@
             heure_ouverture: document.getElementById('h_ouv').value, 
             heure_fermeture: document.getElementById('h_ferm').value, 
             jours_actifs: days,
-            dates_speciales: selectedDates 
+            dates_speciales: window.selectedDates 
         }});
     };
 
