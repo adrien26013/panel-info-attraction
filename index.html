@@ -2,7 +2,81 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"><!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel Drakkar | Admin</title>
+    <style>
+        :root { --primary: #2563eb; --accent: #64748b; --danger: #ef4444; --success: #22c55e; --bg: #f8fafc; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); padding: 20px; color: #1e293b; }
+        .container { max-width: 900px; margin: auto; }
+        h2 { text-align: center; color: #0f172a; margin-bottom: 30px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .card { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+        .card-title { font-weight: 800; color: #334155; margin-bottom: 15px; display: block; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; }
+        button { cursor: pointer; border: none; border-radius: 8px; padding: 10px; font-weight: 600; transition: all 0.2s; }
+        button:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-main { background: var(--primary); color: white; width: 100%; margin-top: 5px; }
+        input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; margin: 5px 0; box-sizing: border-box; }
+        .days-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>PANEL OPÉRATEUR - DRAKKAR</h2>
+    <div class="grid">
+        <div class="card">
+            <span class="card-title">🚨 Annonces Prioritaires</span>
+            <button onclick="sendCommand('SECURITE')" style="background:#f59e0b; color:white; width:100%;">SÉCURITÉ</button>
+            <button onclick="sendCommand('TECHNIQUE')" style="background:#06b6d4; color:white; width:100%; margin-top:5px;">TECHNIQUE</button>
+            <button onclick="sendCommand('FERMETURE')" style="background:#8b5cf6; color:white; width:100%; margin-top:5px;">FERMETURE</button>
+            <button onclick="sendCommand('STOP_ANNONCE')" style="background:var(--danger); color:white; width:100%; margin-top:10px;">ARRÊTER TOUT</button>
+        </div>
+
+        <div class="card">
+            <span class="card-title">📅 Planning & Forçage</span>
+            <label style="font-size:12px;">Cibler une date précise :</label>
+            <input type="date" id="target_date">
+            <div style="display:flex; gap:10px;">
+                <input type="time" id="h_ouv" value="07:00">
+                <input type="time" id="h_ferm" value="18:00">
+            </div>
+            <div class="days-grid" id="days_check">
+                <label><input type="checkbox" value="1"> Lun</label><label><input type="checkbox" value="2"> Mar</label>
+                <label><input type="checkbox" value="3"> Mer</label><label><input type="checkbox" value="4"> Jeu</label>
+                <label><input type="checkbox" value="5"> Ven</label><label><input type="checkbox" value="6"> Sam</label>
+                <label><input type="checkbox" value="0"> Dim</label>
+            </div>
+            <button class="btn-main" onclick="updateSchedule()">Appliquer Planning</button>
+            <div style="display:flex; gap:5px; margin-top:10px;">
+                <button onclick="setForce('OPEN')" style="background:var(--success); color:white; flex:1;">OUVRIR</button>
+                <button onclick="setForce('CLOSE')" style="background:var(--danger); color:white; flex:1;">FERMER</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <span class="card-title">⚙️ Paramètres</span>
+            <label style="font-size:12px;">Affichage Attente :</label>
+            <div style="display:flex; gap:5px; margin-bottom:10px;">
+                <button onclick="setWaitTime(true)" style="background:var(--success); color:white; flex:1;">OUI</button>
+                <button onclick="setWaitTime(false)" style="background:var(--danger); color:white; flex:1;">NON</button>
+            </div>
+            <label style="font-size:12px;">Intervalle Calcul (s) :</label>
+            <input type="number" id="int_calc" value="7">
+            <button class="btn-main" onclick="updateParams()">Sauvegarder config</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Ajoute ici tes fonctions de mise à jour Firebase
+    // Pour la date : const date = document.getElementById('target_date').value;
+    // Ajoute 'target_date': date dans ton objet dbRef.update({...})
+</script>
+</body>
+</html>
     <title>Panel de Contrôle Drakkar Complet</title>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f3f8; color: #333; margin: 0; padding: 20px; }
