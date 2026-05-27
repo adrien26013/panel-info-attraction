@@ -1,34 +1,75 @@
-<div class="panel-section" style="border: 1px solid #ccc; padding: 20px; border-radius: 8px; margin-top: 15px; font-family: Arial, sans-serif;">
-    <h3 style="margin-top: 0;">Configuration de l'Affichage de l'Écran</h3>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Contrôle - Le Drakkar</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fb; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 40px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h2 { color: #005096; margin-top: 0; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; }
+        .section { margin-bottom: 25px; padding: 15px; border-radius: 8px; background: #fafbfc; border: 1px solid #e1e4e8; }
+        .label { font-weight: bold; display: block; margin-bottom: 12px; color: #444; }
+        .flex-group { display: flex; gap: 10px; }
+        button { flex: 1; padding: 12px; border: none; border-radius: 6px; font-weight: bold; font-size: 14px; cursor: pointer; transition: all 0.2s; }
+        .btn-yes { background-color: #28a745; color: white; }
+        .btn-yes:hover { background-color: #218838; }
+        .btn-no { background-color: #dc3545; color: white; }
+        .btn-no:hover { background-color: #c82333; }
+        .btn-info { background-color: #005096; color: white; }
+        .status-indicator { font-size: 12px; margin-top: 8px; color: #666; font-style: italic; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Configuration de l'Écran (FR / EN)</h2>
     
-    <label style="font-weight: bold; display: block; margin-bottom: 10px;">
-        Afficher le Temps d'Attente Estimé sur l'Écran :
-    </label>
-    
-    <button id="btn_wait_yes" onclick="setWaitTimeDisplay(true)" style="background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 10px;">
-        OUI (Afficher)
-    </button>
-    
-    <button id="btn_wait_no" onclick="setWaitTimeDisplay(false)" style="background-color: #f44336; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
-        NON (Masquer)
-    </button>
+    <div class="section">
+        <span class="label">Afficher le temps d'attente estimé sur la TV ?<br><small style="font-weight:normal; color:#888;">Show estimated wait time on screen?</small></span>
+        <div class="flex-group">
+            <button class="btn-yes" onclick="setWaitTimeDisplay(true)">OUI / YES</button>
+            <button class="btn-no" onclick="setWaitTimeDisplay(false)">NON / NO</button>
+        </div>
+        <div class="status-indicator">Actionne le commutateur en temps réel sur la TV</div>
+    </div>
+
+    <div class="section">
+        <span class="label">Contrôle Manuel de l'Attraction</span>
+        <div class="flex-group">
+            <button class="btn-yes" style="background-color:#1e7e34;" onclick="sendCommand('PANEL_OUVERTURE')">FORCER OUVERT</button>
+            <button class="btn-no" style="background-color:#bd2130;" onclick="sendCommand('PANEL_FERMETURE')">FORCER FERMÉ</button>
+        </div>
+        <button class="btn-info" style="width:100%; margin-top:10px; background-color:#6c757d;" onclick="sendCommand('PANEL_RESET_HORAIRE')">REMETTRE EN AUTO (PLANNING)</button>
+    </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
 <script>
-// Exemple de fonction JavaScript de liaison Firebase Database pour ton site
-function setWaitTimeDisplay(isVisible) {
-    // Remplacer RASPBERRY_ID par ton ID configuré (ex: attraction_36)
-    const raspberryId = "TON_RASPBERRY_ID"; 
+    // Configuration Firebase à compléter
+    const firebaseConfig = {
+        databaseURL: "VOTRE_FIREBASE_DB_URL"
+    };
+    firebase.initializeApp(firebaseConfig);
     
-    firebase.database().ref('attractions/' + raspberryId).update({
-        show_wait_time: isVisible
-    })
-    .then(() => {
-        console.log("Visibilité de l'attente modifiée : " + isVisible);
-        alert("L'affichage sur la TV a été mis à jour !");
-    })
-    .catch((error) => {
-        console.error("Erreur Firebase : ", error);
-    });
-}
+    const RASPBERRY_ID = "attraction_36"; 
+
+    function setWaitTimeDisplay(isVisible) {
+        firebase.database().ref('attractions/' + RASPBERRY_ID).update({
+            show_wait_time: isVisible
+        }).then(() => {
+            console.log("show_wait_time mis à jour : " + isVisible);
+        }).catch(err => console.error("Erreur Firebase :", err));
+    }
+
+    function sendCommand(cmdName) {
+        firebase.database().ref('attractions/' + RASPBERRY_ID).update({
+            commande_test: cmdName
+        }).then(() => {
+            console.log("Commande envoyée : " + cmdName);
+        }).catch(err => console.error("Erreur Firebase :", err));
+    }
 </script>
+</body>
+</html>
