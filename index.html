@@ -15,12 +15,11 @@
         .btn-update { background: var(--primary); color: white; font-weight: bold; }
         .days-input { display: flex; gap: 5px; font-size: 11px; flex-wrap: wrap; margin-bottom: 10px; }
         .date-tag { display: inline-block; background: #e2e8f0; padding: 4px 8px; border-radius: 4px; margin: 2px; font-size: 12px; cursor: pointer; border: 1px solid #cbd5e0; }
-        .date-tag:hover { background: var(--danger); color: white; }
+        .date-tag:hover { background: #dc3545; color: white; }
         
-        /* Overlay chargement */
         #loading-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); color:white; flex-direction:column; justify-content:center; align-items:center; z-index:1000; }
         #progress-container { width: 80%; max-width: 400px; background: #333; border-radius: 10px; overflow: hidden; margin-top: 20px; }
-        #progress-bar { width: 0%; height: 20px; background: var(--info); transition: width 0.3s; }
+        #progress-bar { width: 0%; height: 20px; background: #17a2b8; transition: width 0.3s; }
     </style>
 </head>
 <body>
@@ -146,8 +145,16 @@
     window.updateInfo = () => update(dbRef, { info_message: document.getElementById('info_message').value });
     
     window.updateParams = () => {
-        const total = (parseInt(document.getElementById('secu_h').value || 0)*3600) + (parseInt(document.getElementById('secu_m').value || 0)*60) + parseInt(document.getElementById('secu_s').value || 0);
-        update(dbRef, { intervalle_secu: total, intervalle_calcul: parseInt(document.getElementById('int_calc').value) });
+        const h = parseInt(document.getElementById('secu_h').value || 0);
+        const m = parseInt(document.getElementById('secu_m').value || 0);
+        const s = parseInt(document.getElementById('secu_s').value || 0);
+        const total = (h * 3600) + (m * 60) + s;
+        const calc = parseInt(document.getElementById('int_calc').value || 7);
+        
+        update(dbRef, { 
+            intervalle_secu: total, 
+            intervalle_calcul: calc 
+        }).then(() => alert("Paramètres synchronisés !"));
     };
 
     window.updateSchedule = () => {
@@ -157,33 +164,22 @@
 
     window.uploadMusic = () => {
         const file = document.getElementById('file_music').files[0];
-        if(!file) return alert("Sélectionnez un MP3");
-        
-        const overlay = document.getElementById('loading-overlay');
-        const progressBar = document.getElementById('progress-bar');
-        const percentText = document.getElementById('percent-text');
-        overlay.style.display = 'flex';
-
-        const sRef = storageRef(storage, 'musiques/DRAKKAR_ambiance.mp3');
-        const uploadTask = uploadBytesResumable(sRef, file);
-
-        uploadTask.on('state_changed', 
-            (snapshot) => {
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                progressBar.style.width = progress + '%';
-                percentText.innerText = Math.round(progress) + '%';
-            }, 
-            (error) => {
-                overlay.style.display = 'none';
-                alert("Erreur : " + error.message);
-            }, 
-            async () => {
-                const url = await getDownloadURL(uploadTask.snapshot.ref);
-                await update(dbRef, { music_url: url });
-                overlay.style.display = 'none';
-                alert("✅ Succès : La musique a bien été mise à jour !");
-            }
-        );
+        if(!file) return alert("Sélectionnez un fichier");
+        document.getElementById('loading-overlay').style.display = 'flex';
+        const sRef = storageRef(storage, 'musique_ambiance_drakkar.mp3');
+        const task = uploadBytesResumable(sRef, file);
+        task.on('state_changed', (snap) => {
+            const progress = (snap.bytesTransferred / snap.totalBytes) * 100;
+            document.getElementById('progress-bar').style.width = progress + '%';
+            document.getElementById('percent-text').innerText = Math.round(progress) + '%';
+        }, (err) => alert(err), () => {
+            getDownloadURL(task.snapshot.ref).then(url => {
+                update(dbRef, { music_url: url }).then(() => {
+                    document.getElementById('loading-overlay').style.display = 'none';
+                    alert("Musique envoyée avec succès !");
+                });
+            });
+        });
     };
 </script>
 </body>
