@@ -2,24 +2,17 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"><!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
     <title>Panel Drakkar | Admin</title>
     <style>
-        :root { --primary: #2563eb; --accent: #64748b; --danger: #ef4444; --success: #22c55e; --bg: #f8fafc; }
-        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); padding: 20px; color: #1e293b; }
+        :root { --primary: #2563eb; --danger: #ef4444; --success: #22c55e; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f3f8; padding: 20px; }
         .container { max-width: 900px; margin: auto; }
-        h2 { text-align: center; color: #0f172a; margin-bottom: 30px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .card { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
-        .card-title { font-weight: 800; color: #334155; margin-bottom: 15px; display: block; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; }
-        button { cursor: pointer; border: none; border-radius: 8px; padding: 10px; font-weight: 600; transition: all 0.2s; }
-        button:hover { filter: brightness(1.1); transform: translateY(-1px); }
-        .btn-main { background: var(--primary); color: white; width: 100%; margin-top: 5px; }
-        input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; margin: 5px 0; box-sizing: border-box; }
-        .days-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; font-size: 12px; }
+        .card { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .card-title { font-weight: bold; color: #005096; margin-bottom: 15px; display: block; border-left: 4px solid #005096; padding-left: 8px; }
+        input, button { width: 100%; padding: 10px; margin-top: 5px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
+        .btn-update { background: #005096; color: white; cursor: pointer; }
+        .date-tag { display: inline-block; background: #e2e8f0; padding: 5px 10px; border-radius: 5px; margin: 2px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -29,136 +22,84 @@
     <div class="grid">
         <div class="card">
             <span class="card-title">🚨 Annonces Prioritaires</span>
-            <button onclick="sendCommand('SECURITE')" style="background:#f59e0b; color:white; width:100%;">SÉCURITÉ</button>
-            <button onclick="sendCommand('TECHNIQUE')" style="background:#06b6d4; color:white; width:100%; margin-top:5px;">TECHNIQUE</button>
-            <button onclick="sendCommand('FERMETURE')" style="background:#8b5cf6; color:white; width:100%; margin-top:5px;">FERMETURE</button>
-            <button onclick="sendCommand('STOP_ANNONCE')" style="background:var(--danger); color:white; width:100%; margin-top:10px;">ARRÊTER TOUT</button>
+            <button onclick="sendCommand('SECURITE')">SÉCURITÉ</button>
+            <button onclick="sendCommand('TECHNIQUE')">TECHNIQUE</button>
+            <button onclick="sendCommand('FERMETURE')">FERMETURE</button>
+            <button onclick="sendCommand('STOP_ANNONCE')" style="background:var(--danger); color:white;">STOP TOUT</button>
         </div>
 
         <div class="card">
-            <span class="card-title">📅 Planning & Forçage</span>
-            <label style="font-size:12px;">Cibler une date précise :</label>
-            <input type="date" id="target_date">
-            <div style="display:flex; gap:10px;">
-                <input type="time" id="h_ouv" value="07:00">
-                <input type="time" id="h_ferm" value="18:00">
-            </div>
-            <div class="days-grid" id="days_check">
-                <label><input type="checkbox" value="1"> Lun</label><label><input type="checkbox" value="2"> Mar</label>
-                <label><input type="checkbox" value="3"> Mer</label><label><input type="checkbox" value="4"> Jeu</label>
-                <label><input type="checkbox" value="5"> Ven</label><label><input type="checkbox" value="6"> Sam</label>
-                <label><input type="checkbox" value="0"> Dim</label>
-            </div>
-            <button class="btn-main" onclick="updateSchedule()">Appliquer Planning</button>
-            <div style="display:flex; gap:5px; margin-top:10px;">
-                <button onclick="setForce('OPEN')" style="background:var(--success); color:white; flex:1;">OUVRIR</button>
-                <button onclick="setForce('CLOSE')" style="background:var(--danger); color:white; flex:1;">FERMER</button>
-            </div>
+            <span class="card-title">📅 Planning & Dates</span>
+            <input type="time" id="h_ouv" value="07:00">
+            <input type="time" id="h_ferm" value="18:00">
+            <input type="date" id="date_input">
+            <button onclick="addDate()">AJOUTER DATE</button>
+            <div id="date_list" style="margin:10px 0;"></div>
+            <button class="btn-update" onclick="updateSchedule()">APPLIQUER PLANNING</button>
         </div>
 
         <div class="card">
             <span class="card-title">⚙️ Paramètres</span>
-            <label style="font-size:12px;">Affichage Attente :</label>
-            <div style="display:flex; gap:5px; margin-bottom:10px;">
-                <button onclick="setWaitTime(true)" style="background:var(--success); color:white; flex:1;">OUI</button>
-                <button onclick="setWaitTime(false)" style="background:var(--danger); color:white; flex:1;">NON</button>
-            </div>
-            <label style="font-size:12px;">Intervalle Calcul (s) :</label>
-            <input type="number" id="int_calc" value="7">
-            <button class="btn-main" onclick="updateParams()">Sauvegarder config</button>
-        </div>
-    </div>
-</div>
-
-<script>
-    // Ajoute ici tes fonctions de mise à jour Firebase
-    // Pour la date : const date = document.getElementById('target_date').value;
-    // Ajoute 'target_date': date dans ton objet dbRef.update({...})
-</script>
-</body>
-</html>
-    <title>Panel de Contrôle Drakkar Complet</title>
-    <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f3f8; color: #333; margin: 0; padding: 20px; }
-        .container { max-width: 800px; margin: 20px auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-        h2 { color: #005096; text-align: center; border-bottom: 3px solid #005096; padding-bottom: 12px; }
-        .grid-sections { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
-        .section { background: #fafbfc; border: 1px solid #dcdfe6; border-radius: 8px; padding: 18px; }
-        .section-title { font-weight: bold; color: #005096; margin-bottom: 10px; display: block; border-left: 4px solid #005096; padding-left: 8px; }
-        input, button { width: 100%; padding: 10px; margin-top: 5px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; }
-        .btn-update { background: #005096; color: white; cursor: pointer; }
-        .days-input { display: flex; gap: 5px; font-size: 11px; flex-wrap: wrap; }
-    </style>
-</head>
-<body>
-<div class="container">
-    <h2>PANEL OPÉRATEUR - DRAKKAR</h2>
-    <div class="grid-sections">
-        <div class="section">
-            <span class="section-title">Annonces</span>
-            <button onclick="sendCommand('SECURITE')">SÉCURITÉ</button>
-            <button onclick="sendCommand('TECHNIQUE')">TECHNIQUE</button>
-            <button onclick="sendCommand('FERMETURE')">FERMETURE</button>
-            <button onclick="sendCommand('STOP_ANNONCE')" style="background:#dc3545; color:white;">STOP ANNONCE</button>
-        </div>
-        <div class="section">
-            <span class="section-title">Message Défilant</span>
-            <input type="text" id="info_message" placeholder="Votre message...">
-            <button class="btn-update" onclick="updateInfo()">METTRE À JOUR</button>
-        </div>
-        <div class="section">
-            <span class="section-title">Paramètres</span>
-            <label>Affichage Attente : <button onclick="setWaitTime(true)">OUI</button> <button onclick="setWaitTime(false)">NON</button></label>
-            <label>Intervalle Calcul (sec) :</label>
-            <input type="number" id="int_calc" value="7">
-            <label>Fréquence Sécu (H/M/S) :</label>
+            <label>Affichage Attente :</label>
             <div style="display:flex; gap:5px;">
-                <input type="number" id="secu_h" value="0"><input type="number" id="secu_m" value="2"><input type="number" id="secu_s" value="0">
+                <button onclick="setWaitTime(true)">OUI</button>
+                <button onclick="setWaitTime(false)">NON</button>
             </div>
-            <button class="btn-update" onclick="updateParams()">VALIDER PARAMÈTRES</button>
-        </div>
-        <div class="section">
-            <span class="section-title">Horaires & Forçage</span>
-            <input type="time" id="h_ouv" value="07:00">
-            <input type="time" id="h_ferm" value="18:00">
-            <div class="days-input" id="days_check">
-                <label><input type="checkbox" value="1"> Lun</label><label><input type="checkbox" value="2"> Mar</label>
-                <label><input type="checkbox" value="3"> Mer</label><label><input type="checkbox" value="4"> Jeu</label>
-                <label><input type="checkbox" value="5"> Ven</label><label><input type="checkbox" value="6"> Sam</label>
-                <label><input type="checkbox" value="0"> Dim</label>
-            </div>
-            <button class="btn-update" onclick="updateSchedule()">APPLIQUER HORAIRES</button>
-            <button onclick="setForce('OPEN')">FORCER OUVERT</button>
-            <button onclick="setForce('CLOSE')">FORCER FERMÉ</button>
-        </div>
-        <div class="section" style="grid-column: span 2;">
-            <span class="section-title">Importation Musique MP3</span>
-            <input type="file" id="file_music" accept="audio/mp3">
-            <button class="btn-update" onclick="uploadMusic()">CHARGER LE FICHIER</button>
+            <input type="number" id="int_calc" placeholder="Intervalle calcul (s)">
+            <button class="btn-update" onclick="updateParams()">SAUVEGARDER</button>
         </div>
     </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
-<script>
-    firebase.initializeApp({ /* Tes configs ici */ });
-    const dbRef = firebase.database().ref('attractions/DRAKKAR');
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getDatabase, ref, update } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
-    function sendCommand(cmd) { dbRef.update({ commande_test: cmd }); }
-    function setWaitTime(val) { dbRef.update({ show_wait_time: val }); }
-    function updateInfo() { dbRef.update({ info_message: document.getElementById('info_message').value }); }
-    function updateParams() {
-        const total = (parseInt(document.getElementById('secu_h').value)*3600) + (parseInt(document.getElementById('secu_m').value)*60) + parseInt(document.getElementById('secu_s').value);
-        dbRef.update({ intervalle_secu: total, intervalle_calcul: parseInt(document.getElementById('int_calc').value) });
+    const firebaseConfig = {
+        apiKey: "AIzaSyDWob3NIJTPxrdpreSpDr__eaPJA2ZCTl0",
+        databaseURL: "https://attraction-info-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "attraction-info",
+        storageBucket: "attraction-info.firebasestorage.app"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const dbRef = ref(db, 'attractions/DRAKKAR');
+
+    let selectedDates = [];
+
+    window.addDate = () => {
+        const d = document.getElementById('date_input').value;
+        if(d && !selectedDates.includes(d)) {
+            selectedDates.push(d);
+            renderDates();
+        }
+    };
+
+    function renderDates() {
+        const container = document.getElementById('date_list');
+        container.innerHTML = selectedDates.map(d => `<span class="date-tag" onclick="removeDate('${d}')">${d} ✕</span>`).join('');
     }
-    function updateSchedule() {
-        const days = Array.from(document.querySelectorAll('#days_check input:checked')).map(i => parseInt(i.value));
-        dbRef.update({ horaires_ouverture: { heure_ouverture: document.getElementById('h_ouv').value, heure_fermeture: document.getElementById('h_ferm').value, jours_actifs: days }});
-    }
-    function setForce(m) { dbRef.update({ force_open_panel: m==='OPEN', force_close_panel: m==='CLOSE' }); }
-    function uploadMusic() { /* Logique de upload storage identique à la version précédente */ }
+
+    window.removeDate = (d) => {
+        selectedDates = selectedDates.filter(date => date !== d);
+        renderDates();
+    };
+
+    window.updateSchedule = () => {
+        update(dbRef, {
+            horaires_ouverture: {
+                h_ouverture: document.getElementById('h_ouv').value,
+                h_fermeture: document.getElementById('h_ferm').value,
+                dates_speciales: selectedDates
+            }
+        });
+        alert("Planning mis à jour !");
+    };
+
+    window.sendCommand = (cmd) => update(dbRef, { commande_test: cmd });
+    window.setWaitTime = (val) => update(dbRef, { show_wait_time: val });
+    window.updateParams = () => update(dbRef, { intervalle_calcul: parseInt(document.getElementById('int_calc').value) });
 </script>
 </body>
 </html>
