@@ -78,6 +78,7 @@
                 <button onclick="setWaitTime(false)" style="background:var(--danger); color:white;">Attente: NON</button>
             </div>
             <input type="number" id="capacite" placeholder="Capacité (Personne / heure)">
+            <div style="font-size:12px; margin-top:10px;">Calcul / arfichage attente (S) :</div>
             <input type="number" id="int_calc" placeholder="Intervalle calcul (s)">
             <div style="font-size:12px; margin-top:10px;">Diffusion sécurité (H/M/S) :</div>
             <div style="display:flex; gap:5px;">
@@ -95,6 +96,7 @@
             <span class="card-title">📝 Message Défilant</span>
             <input type="text" id="info_message" placeholder="Texte 1 | Texte 2 | Texte 3">
             <input type="number" id="page_duration" placeholder="Temps par page (secondes)">
+            <div style="font-size:12px; margin-top:10px;">Pour changer les textes par page, utulisez le symbole | à chaque fin de texte. Exemple : Bienvenue au Drakkar ! | Horraire des specacles...</div>
             <button class="btn-update" onclick="updateInfo()">METTRE À JOUR MESSAGE</button>
         </div>
     </div>
