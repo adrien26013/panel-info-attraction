@@ -9,19 +9,20 @@
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
         .card { background: white; padding: 40px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); width: 100%; max-width: 520px; }
         h1 { color: var(--dark); text-align: center; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 3px; font-size: 24px; border-bottom: 2px solid var(--primary); padding-bottom: 10px; }
-        h2 { font-size: 16px; color: var(--dark); margin-top: 20px; margin-bottom: 15px; border-left: 4px solid var(--primary); padding-left: 8px; text-transform: uppercase; }
+        h2 { font-size: 14px; color: #5f6368; margin-top: 20px; margin-bottom: 12px; border-left: 4px solid var(--primary); padding-left: 8px; text-transform: uppercase; font-weight: 600; }
         .group { margin-bottom: 25px; }
         .row { display: flex; gap: 10px; align-items: center; }
-        .grid-tests { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 25px; }
+        .grid-tests { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px; }
         label { display: block; margin-bottom: 10px; font-weight: 600; color: #5f6368; font-size: 14px; }
         input[type="number"], input[type="time"], select, textarea { width: 100%; padding: 14px; border: 2px solid #e0e0e0; border-radius: 12px; box-sizing: border-box; font-size: 16px; outline: none; transition: all 0.3s ease; background: #f8f9fa; }
         .row input[type="number"] { text-align: center; padding: 10px; }
         button { width: 100%; background: var(--primary); color: white; border: none; padding: 16px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.3s; margin-top: 10px; }
         button:hover { background: #1557b0; transform: translateY(-2px); }
-        .btn-test { padding: 12px 5px; font-size: 13px; margin-top: 0; }
+        .btn-test { padding: 12px 5px; font-size: 13px; margin-top: 0; font-weight: bold; }
         .btn-danger { background: var(--danger); } .btn-danger:hover { background: #c53026; }
         .btn-warning { background: var(--warning); color: #000; } .btn-warning:hover { background: #dfa503; }
         .btn-dark { background: var(--dark); } .btn-dark:hover { background: #000; }
+        .btn-secondary { background: var(--secondary); } .btn-secondary:hover { background: #278541; }
         .section-block { margin-top: 30px; padding-top: 25px; border-top: 1px dashed #ddd; }
         .days-select { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
         .day-checkbox { display: none; }
@@ -35,11 +36,19 @@
 <div class="card">
     <h1>Le Drakkar</h1>
     
-    <label>Commandes de test instantanées</label>
+    <h2>📢 Diffusion des Annonces Video</h2>
     <div class="grid-tests">
-        <button class="btn-test btn-danger" onclick="declencherTest('SECURITE')">SÉCURITÉ</button>
-        <button class="btn-test btn-warning" onclick="declencherTest('TECHNIQUE')">TECHNIQUE</button>
-        <button class="btn-test btn-dark" onclick="declencherTest('FERMETURE')">FERMETURE</button>
+        <button class="btn-test btn-danger" onclick="declencherTest('SECURITE')">PLAY SECU</button>
+        <button class="btn-test btn-warning" onclick="declencherTest('TECHNIQUE')">PLAY TECH</button>
+        <button class="btn-test btn-dark" onclick="declencherTest('FERMETURE')">PLAY FERM</button>
+    </div>
+    <button class="btn-danger" style="margin-top: 0; margin-bottom: 25px; padding: 12px;" onclick="declencherTest('STOP_ANNONCE')">🛑 STOP ANNONCE EN COURS</button>
+
+    <h2>🚪 État de l'Attraction</h2>
+    <div class="grid-tests" style="margin-bottom: 25px;">
+        <button class="btn-test btn-secondary" onclick="declencherTest('PANEL_OUVERTURE')">OUVRIR</button>
+        <button class="btn-test btn-danger" onclick="declencherTest('PANEL_FERMETURE')">FERMER</button>
+        <button class="btn-test btn-dark" onclick="declencherTest('PANEL_RESET_HORAIRE')">AUTO (HORAIRES)</button>
     </div>
 
     <div class="group" style="background: #f1f3f4; padding: 20px; border-radius: 14px; border: 1px solid #e0e0e0;">
@@ -130,12 +139,10 @@
             if (document.activeElement.id !== 'capa') document.getElementById('capa').value = data.capa_heure || 800;
             if (document.activeElement.id !== 'msg') document.getElementById('msg').value = data.info_message || "";
             
-            // Récupération de la plage horaire complexe
             if (data.horaires_ouverture) {
                 if (document.activeElement.id !== 'time_on') document.getElementById('time_on').value = data.horaires_ouverture.heure_ouverture || "07:00";
                 if (document.activeElement.id !== 'time_off') document.getElementById('time_off').value = data.horaires_ouverture.heure_fermeture || "18:00";
                 
-                // Coche des jours
                 let activeDays = data.horaires_ouverture.jours_actifs || [0,1,2,3,4,5,6];
                 document.querySelectorAll('.day-checkbox').forEach(cb => {
                     cb.checked = activeDays.includes(parseInt(cb.value));
