@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Contrôle Drakkar - Complet</title>
+    <title>Panel de Contrôle Drakkar</title>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f3f8; color: #333; margin: 0; padding: 20px; }
         .container { max-width: 800px; margin: 20px auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
@@ -18,7 +18,6 @@
         button { flex: 1; padding: 12px; border: none; border-radius: 6px; font-weight: bold; font-size: 14px; cursor: pointer; transition: background 0.2s; min-width: 120px; }
         
         .btn-update { background-color: #005096; color: white; width: 100%; margin-top: 10px; }
-        .btn-update:hover { background-color: #003666; }
         .btn-secu { background-color: #ff9800; color: white; }
         .btn-tech { background-color: #17a2b8; color: white; }
         .btn-ferm { background-color: #6f42c1; color: white; }
@@ -26,225 +25,90 @@
         .btn-yes { background-color: #28a745; color: white; }
         .btn-no { background-color: #dc3545; color: white; }
         .btn-reset { background-color: #6c757d; color: white; width: 100%; margin-top: 10px; }
-        
         .days-input { display: flex; gap: 8px; margin-top: 5px; flex-wrap: wrap; }
         .day-checkbox { display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: bold; }
-        .progress-bar { background: #e0e0e0; border-radius: 4px; height: 8px; margin-top: 8px; display: none; }
-        .progress-fill { background: #008080; width: 0%; height: 100%; border-radius: 4px; transition: width 0.1s; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>PANEL OPÉRATEUR SYSTÈME - DRAKKAR</h2>
-    
+    <h2>PANEL OPÉRATEUR - DRAKKAR</h2>
     <div class="grid-sections">
         
         <div class="section">
-            <span class="section-title">Annonces et Consignes Prioritaires</span>
+            <span class="section-title">Annonces Prioritaires</span>
             <div class="flex-group" style="margin-bottom: 10px;">
                 <button class="btn-secu" onclick="sendCommand('SECURITE')">SÉCURITÉ</button>
                 <button class="btn-tech" onclick="sendCommand('TECHNIQUE')">TECHNIQUE</button>
                 <button class="btn-ferm" onclick="sendCommand('FERMETURE')">FERMETURE</button>
             </div>
-            <div class="flex-group">
-                <button class="btn-stop" onclick="sendCommand('STOP_ANNONCE')">ARRÊTER L'ANNONCE (RETOUR AMBIANCE / PUB)</button>
-            </div>
+            <button class="btn-stop" onclick="sendCommand('STOP_ANNONCE')">ARRÊTER L'ANNONCE</button>
         </div>
 
         <div class="section">
-            <span class="section-title">Programmation Horaire Automatique (Affichage Fermé)</span>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 10px;">
-                <div class="form-group">
-                    <label for="heure_ouverture">Heure d'Ouverture :</label>
-                    <input type="time" id="heure_ouverture" value="07:00">
-                </div>
-                <div class="form-group">
-                    <label for="heure_fermeture">Heure de Fermeture :</label>
-                    <input type="time" id="heure_fermeture" value="18:00">
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Jours actifs de fonctionnement :</label>
-                <div class="days-input">
-                    <label class="day-checkbox"><input type="checkbox" id="p_lun" value="1" checked> Lun</label>
-                    <label class="day-checkbox"><input type="checkbox" id="p_mar" value="2" checked> Mar</label>
-                    <label class="day-checkbox"><input type="checkbox" id="p_mer" value="3" checked> Mer</label>
-                    <label class="day-checkbox"><input type="checkbox" id="p_jeu" value="4" checked> Jeu</label>
-                    <label class="day-checkbox"><input type="checkbox" id="p_ven" value="5" checked> Ven</label>
-                    <label class="day-checkbox"><input type="checkbox" id="p_sam" value="6" checked> Sam</label>
-                    <label class="day-checkbox"><input type="checkbox" id="p_dim" value="0" checked> Dim</label>
-                </div>
-            </div>
-            <button class="btn-update" style="background-color: #6f42c1;" onclick="updateSchedule()">APPLIQUER LA PROGRAMMATION HORAIRE</button>
-        </div>
-
-        <div class="section">
-            <span class="section-title">Importation de la Musique d'Ambiance (.MP3)</span>
-            <div class="form-group">
-                <label for="file_music">Sélectionnez un fichier audio MP3 à envoyer au Drakkar :</label>
-                <input type="file" id="file_music" accept="audio/mp3" style="width: 100%; padding: 5px;">
-                <div class="progress-bar" id="p_bar"><div class="progress-fill" id="p_fill"></div></div>
-                <small id="upload_status" style="display:block; margin-top:5px; color:#555;"></small>
-            </div>
-            <button class="btn-update" style="background-color: #008080;" onclick="uploadMusicFile()">CHARGER ET ENVOYER LE FICHIER MP3</button>
-        </div>
-
-        <div class="section">
-            <span class="section-title">Case Information Défilante Screen</span>
-            <div class="form-group">
-                <label for="info_message">Message diffusé (\n pour couper les pages) :</label>
-                <input type="text" id="info_message">
-            </div>
-            <button class="btn-update" onclick="updateInfoText()">METTRE À JOUR LE TEXTE</button>
-        </div>
-
-        <div class="section">
-            <span class="section-title">Paramètres de File d'Attente</span>
+            <span class="section-title">Paramètres de fonctionnement</span>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <div class="form-group">
-                    <label for="capa_heure">Capacité horaire :</label>
-                    <input type="number" id="capa_heure" value="300">
+                    <label>Affichage Temps Attente :</label>
+                    <div class="flex-group">
+                        <button class="btn-yes" onclick="setWaitTime(true)">OUI</button>
+                        <button class="btn-no" onclick="setWaitTime(false)">NON</button>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label for="personnes">Personnes en file :</label>
-                    <input type="number" id="personnes" value="0">
+                    <label for="intervalle_calcul">Intervalle Calcul (sec) :</label>
+                    <input type="number" id="intervalle_calcul" value="7">
                 </div>
             </div>
-            <button class="btn-update" onclick="updateCalculParams()">SYNCHRONISER LES PARAMÈTRES</button>
+            
+            <label>Fréquence Annonce Sécurité :</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                <input type="number" id="secu_h" placeholder="Heures" value="0">
+                <input type="number" id="secu_m" placeholder="Minutes" value="2">
+                <input type="number" id="secu_s" placeholder="Secondes" value="0">
+            </div>
+            <button class="btn-update" onclick="updateConfig()">METTRE À JOUR PARAMÈTRES</button>
         </div>
 
         <div class="section">
-            <span class="section-title">Forçages Manuels (Hors-Planning)</span>
+            <span class="section-title">Programmation Horaire</span>
             <div class="flex-group">
-                <button class="btn-yes" style="background-color: #1e7e34;" onclick="setManualForce('OPEN')">FORCER L'OUVERTURE</button>
-                <button class="btn-no" style="background-color: #bd2130;" onclick="setManualForce('CLOSE')">FORCER LA FERMETURE</button>
+                <input type="time" id="h_ouv" value="07:00">
+                <input type="time" id="h_ferm" value="18:00">
             </div>
-            <button class="btn-reset" onclick="setManualForce('RESET')">REPASSER EN MODE AUTO (SUIVRE PLANNING)</button>
+            <button class="btn-update" style="background-color: #6f42c1;" onclick="updateSchedule()">APPLIQUER HORAIRES</button>
         </div>
-
     </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyDWob3NIJTPxrdpreSpDr__eaPJA2ZCTl0",
-        authDomain: "attraction-info.firebaseapp.com",
-        databaseURL: "https://attraction-info-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "attraction-info",
-        storageBucket: "attraction-info.appspot.com" // Configuration automatique du bucket de stockage
-    };
-    
-    firebase.initializeApp(firebaseConfig);
-    
-    const RASPBERRY_ID = "DRAKKAR";
-    const dbRef = firebase.database().ref('attractions/' + RASPBERRY_ID);
+    const dbRef = firebase.database().ref('attractions/DRAKKAR');
 
-    dbRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-            if (data.info_message !== undefined && document.activeElement !== document.getElementById('info_message')) {
-                document.getElementById('info_message').value = data.info_message;
-            }
-            if (data.capa_heure !== undefined && document.activeElement !== document.getElementById('capa_heure')) {
-                document.getElementById('capa_heure').value = data.capa_heure;
-            }
-            if (data.personnes !== undefined && document.activeElement !== document.getElementById('personnes')) {
-                document.getElementById('personnes').value = data.personnes;
-            }
-            if (data.horaires_ouverture !== undefined) {
-                const h = data.horaires_ouverture;
-                if(h.heure_ouverture) document.getElementById('heure_ouverture').value = h.heure_ouverture;
-                if(h.heure_fermeture) document.getElementById('heure_fermeture').value = h.heure_fermeture;
-                if(h.jours_actifs) {
-                    const ja = h.jours_actifs;
-                    document.getElementById('p_lun').checked = ja.includes(1);
-                    document.getElementById('p_mar').checked = ja.includes(2);
-                    document.getElementById('p_mer').checked = ja.includes(3);
-                    document.getElementById('p_jeu').checked = ja.includes(4);
-                    document.getElementById('p_ven').checked = ja.includes(5);
-                    document.getElementById('p_sam').checked = ja.includes(6);
-                    document.getElementById('p_dim').checked = ja.includes(0);
-                }
-            }
-        }
-    });
+    function sendCommand(cmd) { dbRef.update({ commande_test: cmd }); }
+    function setWaitTime(val) { dbRef.update({ show_wait_time: val }); }
 
-    function uploadMusicFile() {
-        const fileInput = document.getElementById('file_music');
-        const file = fileInput.files[0];
-        const statusText = document.getElementById('upload_status');
-        const pBar = document.getElementById('p_bar');
-        const pFill = document.getElementById('p_fill');
-
-        if (!file) {
-            alert("Veuillez d'abord sélectionner un fichier .mp3");
-            return;
-        }
-
-        statusText.innerText = "Téléchargement en cours...";
-        pBar.style.display = "block";
-
-        // Sauvegarde dans le dossier musiques/ du Firebase Storage
-        const storageRef = firebase.storage().ref('musiques/' + RASPBERRY_ID + '_ambiance.mp3');
-        const uploadTask = storageRef.put(file);
-
-        uploadTask.on('state_changed', 
-            (snapshot) => {
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                pFill.style.width = progress + '%';
-            }, 
-            (error) => {
-                statusText.innerText = "Erreur de chargement : " + error.message;
-            }, 
-            () => {
-                uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
-                    statusText.innerText = "Fichier envoyé avec succès ! Synchronisation RPi...";
-                    dbRef.update({ music_url: downloadURL });
-                    setTimeout(() => { pBar.style.display = "none"; }, 2000);
-                });
-            }
-        );
+    function updateConfig() {
+        const h = parseInt(document.getElementById('secu_h').value) || 0;
+        const m = parseInt(document.getElementById('secu_m').value) || 0;
+        const s = parseInt(document.getElementById('secu_s').value) || 0;
+        const totalSeconds = (h * 3600) + (m * 60) + s;
+        
+        dbRef.update({
+            intervalle_secu: totalSeconds,
+            intervalle_calcul: parseInt(document.getElementById('intervalle_calcul').value) || 7
+        });
+        alert("Paramètres mis à jour !");
     }
 
     function updateSchedule() {
-        const h_open = document.getElementById('heure_ouverture').value;
-        const h_close = document.getElementById('heure_fermeture').value;
-        
-        const jours_actifs = [];
-        if(document.getElementById('p_dim').checked) jours_actifs.push(0);
-        if(document.getElementById('p_lun').checked) jours_actifs.push(1);
-        if(document.getElementById('p_mar').checked) jours_actifs.push(2);
-        if(document.getElementById('p_mer').checked) jours_actifs.push(3);
-        if(document.getElementById('p_jeu').checked) jours_actifs.push(4);
-        if(document.getElementById('p_ven').checked) jours_actifs.push(5);
-        if(document.getElementById('p_sam').checked) jours_actifs.push(6);
-
         dbRef.update({
             horaires_ouverture: {
-                heure_ouverture: h_open,
-                heure_fermeture: h_close,
-                jours_actifs: jours_actifs
+                heure_ouverture: document.getElementById('h_ouv').value,
+                heure_fermeture: document.getElementById('h_ferm').value
             }
-        });
-        console.log("[WEB PANEL] Programmation horaire mise à jour.");
-    }
-
-    function sendCommand(cmdName) { dbRef.update({ commande_test: cmdName }); }
-    function setManualForce(mode) {
-        if (mode === 'OPEN') dbRef.update({ force_open_panel: true, force_close_panel: false });
-        else if (mode === 'CLOSE') dbRef.update({ force_open_panel: false, force_close_panel: true });
-        else dbRef.update({ force_open_panel: false, force_close_panel: false });
-    }
-    function updateInfoText() { dbRef.update({ info_message: document.getElementById('info_message').value }); }
-    function updateCalculParams() {
-        dbRef.update({
-            capa_heure: parseInt(document.getElementById('capa_heure').value) || 300,
-            personnes: parseInt(document.getElementById('personnes').value) || 0
         });
     }
 </script>
