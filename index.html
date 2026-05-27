@@ -12,12 +12,11 @@
         .section { background: #fafbfc; border: 1px solid #dcdfe6; border-radius: 8px; padding: 18px; }
         .section-title { font-weight: bold; font-size: 16px; color: #005096; margin-bottom: 15px; display: block; border-left: 4px solid #005096; padding-left: 8px; }
         .form-group { margin-bottom: 15px; }
-        label { font-weight: 6px; display: block; margin-bottom: 6px; font-size: 14px; }
+        label { font-weight: 600; display: block; margin-bottom: 6px; font-size: 14px; }
         input[type="text"], input[type="number"] { width: 100%; padding: 10px; border: 1px solid #dcdfe6; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
         .flex-group { display: flex; gap: 10px; }
         button { flex: 1; padding: 12px; border: none; border-radius: 6px; font-weight: bold; font-size: 14px; cursor: pointer; transition: background 0.2s; }
         
-        /* Boutons thématiques */
         .btn-update { background-color: #005096; color: white; width: 100%; margin-top: 10px; }
         .btn-update:hover { background-color: #003666; }
         .btn-secu { background-color: #ff9800; color: white; }
@@ -99,10 +98,10 @@
         <div class="section">
             <span class="section-title">Contrôle et Forçage Horaire</span>
             <div class="flex-group">
-                <button class="btn-yes" style="background-color: #1e7e34;" onclick="sendCommand('PANEL_OUVERTURE')">FORCER L'OUVERTURE</button>
-                <button class="btn-no" style="background-color: #bd2130;" onclick="sendCommand('PANEL_FERMETURE')">FORCER LA FERMETURE</button>
+                <button class="btn-yes" style="background-color: #1e7e34;" onclick="setManualForce('OPEN')">FORCER L'OUVERTURE</button>
+                <button class="btn-no" style="background-color: #bd2130;" onclick="setManualForce('CLOSE')">FORCER LA FERMETURE</button>
             </div>
-            <button class="btn-reset" onclick="sendCommand('PANEL_RESET_HORAIRE')">REPASSER EN MODE AUTOMATIQUE (SUIVRE PLANNING)</button>
+            <button class="btn-reset" onclick="setManualForce('RESET')">REPASSER EN MODE AUTOMATIQUE (SUIVRE PLANNING)</button>
         </div>
 
     </div>
@@ -112,7 +111,6 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <script>
-    // Configuration de votre base de données Firebase
     const firebaseConfig = {
         databaseURL: "VOTRE_FIREBASE_DB_URL"
     };
@@ -121,15 +119,25 @@
     const RASPBERRY_ID = "attraction_36";
     const dbRef = firebase.database().ref('attractions/' + RASPBERRY_ID);
 
-    // Charger les valeurs actuelles au démarrage du panel pour éviter d'écraser des champs vides
-    dbRef.once('value', (snapshot) => {
+    // Charger les valeurs actuelles au demarrage
+    dbRef.on('value', (snapshot) => {
         const data = snapshot.val();
         if (data) {
-            if (data.info_message) document.getElementById('info_message').value = data.info_message;
-            if (data.capa_heure) document.getElementById('capa_heure').value = data.capa_heure;
-            if (data.personnes) document.getElementById('personnes').value = data.personnes;
-            if (data.intervalle_secu) document.getElementById('intervalle_secu').value = data.intervalle_secu;
-            if (data.intervalle_calcul) document.getElementById('intervalle_calcul').value = data.intervalle_calcul;
+            if (data.info_message && document.activeElement !== document.getElementById('info_message')) {
+                document.getElementById('info_message').value = data.info_message;
+            }
+            if (data.capa_heure && document.activeElement !== document.getElementById('capa_heure')) {
+                document.getElementById('capa_heure').value = data.capa_heure;
+            }
+            if (data.personnes && document.activeElement !== document.getElementById('personnes')) {
+                document.getElementById('personnes').value = data.personnes;
+            }
+            if (data.intervalle_secu && document.activeElement !== document.getElementById('intervalle_secu')) {
+                document.getElementById('intervalle_secu').value = data.intervalle_secu;
+            }
+            if (data.intervalle_calcul && document.activeElement !== document.getElementById('intervalle_calcul')) {
+                document.getElementById('intervalle_calcul').value = data.intervalle_calcul;
+            }
         }
     });
 
@@ -139,6 +147,16 @@
 
     function setWaitTimeDisplay(isVisible) {
         dbRef.update({ show_wait_time: isVisible });
+    }
+
+    function setManualForce(mode) {
+        if (mode === 'OPEN') {
+            dbRef.update({ force_open_panel: true, force_close_panel: false });
+        } else if (mode === 'CLOSE') {
+            dbRef.update({ force_open_panel: false, force_close_panel: true });
+        } else {
+            dbRef.update({ force_open_panel: false, force_close_panel: false });
+        }
     }
 
     function updateInfoText() {
