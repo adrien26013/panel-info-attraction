@@ -2,44 +2,109 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Panel de Contrôle - Le Drakkar</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Contrôle Organisé - Le Drakkar</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fb; color: #333; margin: 0; padding: 20px; }
-        .container { max-width: 600px; margin: 40px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        h2 { color: #005096; margin-top: 0; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; }
-        .section { margin-bottom: 25px; padding: 15px; border-radius: 8px; background: #fafbfc; border: 1px solid #e1e4e8; }
-        .label { font-weight: bold; display: block; margin-bottom: 12px; color: #444; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f3f8; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 750px; margin: 20px auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        h2 { color: #005096; text-align: center; margin-top: 0; border-bottom: 3px solid #005096; padding-bottom: 12px; }
+        .grid-sections { display: grid; grid-template-columns: 1fr; gap: 20px; margin-top: 20px; }
+        .section { background: #fafbfc; border: 1px solid #dcdfe6; border-radius: 8px; padding: 18px; }
+        .section-title { font-weight: bold; font-size: 16px; color: #005096; margin-bottom: 15px; display: block; border-left: 4px solid #005096; padding-left: 8px; }
+        .form-group { margin-bottom: 15px; }
+        label { font-weight: 6px; display: block; margin-bottom: 6px; font-size: 14px; }
+        input[type="text"], input[type="number"] { width: 100%; padding: 10px; border: 1px solid #dcdfe6; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
         .flex-group { display: flex; gap: 10px; }
-        button { flex: 1; padding: 12px; border: none; border-radius: 6px; font-weight: bold; font-size: 14px; cursor: pointer; transition: all 0.2s; }
+        button { flex: 1; padding: 12px; border: none; border-radius: 6px; font-weight: bold; font-size: 14px; cursor: pointer; transition: background 0.2s; }
+        
+        /* Boutons thématiques */
+        .btn-update { background-color: #005096; color: white; width: 100%; margin-top: 10px; }
+        .btn-update:hover { background-color: #003666; }
+        .btn-secu { background-color: #ff9800; color: white; }
+        .btn-secu:hover { background-color: #e68a00; }
+        .btn-tech { background-color: #17a2b8; color: white; }
+        .btn-tech:hover { background-color: #138496; }
+        .btn-ferm { background-color: #6f42c1; color: white; }
+        .btn-ferm:hover { background-color: #59339d; }
+        .btn-stop { background-color: #dc3545; color: white; flex: 2; }
+        .btn-stop:hover { background-color: #bd2130; }
         .btn-yes { background-color: #28a745; color: white; }
         .btn-yes:hover { background-color: #218838; }
         .btn-no { background-color: #dc3545; color: white; }
         .btn-no:hover { background-color: #c82333; }
-        .btn-info { background-color: #005096; color: white; }
-        .status-indicator { font-size: 12px; margin-top: 8px; color: #666; font-style: italic; text-align: center; }
+        .btn-reset { background-color: #6c757d; color: white; width: 100%; margin-top: 10px; }
+        .btn-reset:hover { background-color: #5a6268; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Configuration de l'Écran (FR / EN)</h2>
+    <h2>PANEL OPÉRATEUR - LE DRAKKAR</h2>
     
-    <div class="section">
-        <span class="label">Afficher le temps d'attente estimé sur la TV ?<br><small style="font-weight:normal; color:#888;">Show estimated wait time on screen?</small></span>
-        <div class="flex-group">
-            <button class="btn-yes" onclick="setWaitTimeDisplay(true)">OUI / YES</button>
-            <button class="btn-no" onclick="setWaitTimeDisplay(false)">NON / NO</button>
+    <div class="grid-sections">
+        
+        <div class="section">
+            <span class="section-title">Diffusion des Consignes Prioritaires</span>
+            <div class="flex-group" style="margin-bottom: 10px;">
+                <button class="btn-secu" onclick="sendCommand('SECURITE')">SÉCURITÉ</button>
+                <button class="btn-tech" onclick="sendCommand('TECHNIQUE')">TECHNIQUE</button>
+                <button class="btn-ferm" onclick="sendCommand('FERMETURE')">FERMETURE</button>
+            </div>
+            <div class="flex-group">
+                <button class="btn-stop" onclick="sendCommand('STOP_ANNONCE')">ARRÊTER L'ANNONCE EN COURS (RETOUR PUB)</button>
+            </div>
         </div>
-        <div class="status-indicator">Actionne le commutateur en temps réel sur la TV</div>
-    </div>
 
-    <div class="section">
-        <span class="label">Contrôle Manuel de l'Attraction</span>
-        <div class="flex-group">
-            <button class="btn-yes" style="background-color:#1e7e34;" onclick="sendCommand('PANEL_OUVERTURE')">FORCER OUVERT</button>
-            <button class="btn-no" style="background-color:#bd2130;" onclick="sendCommand('PANEL_FERMETURE')">FORCER FERMÉ</button>
+        <div class="section">
+            <span class="section-title">Case Information Défilante Screen</span>
+            <div class="form-group">
+                <label for="info_message">Message diffusé (Utilise \n pour créer plusieurs pages alternées) :</label>
+                <input type="text" id="info_message" placeholder="Ex: Bienvenue au Drakkar !\nAttention aux éclaboussures !">
+            </div>
+            <button class="btn-update" onclick="updateInfoText()">METTRE À JOUR LE TEXTE</button>
         </div>
-        <button class="btn-info" style="width:100%; margin-top:10px; background-color:#6c757d;" onclick="sendCommand('PANEL_RESET_HORAIRE')">REMETTRE EN AUTO (PLANNING)</button>
+
+        <div class="section">
+            <span class="section-title">Calcul Automatique du Temps d'Attente</span>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group">
+                    <label for="capa_heure">Capacité horaire (pers/h) :</label>
+                    <input type="number" id="capa_heure" value="800">
+                </div>
+                <div class="form-group">
+                    <label for="personnes">Personnes dans la file :</label>
+                    <input type="number" id="personnes" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="intervalle_secu">Fréquence annonce sécu (sec) :</label>
+                    <input type="number" id="intervalle_secu" value="120">
+                </div>
+                <div class="form-group">
+                    <label for="intervalle_calcul">Intervalle Rafraîchissement (sec) :</label>
+                    <input type="number" id="intervalle_calcul" value="7">
+                </div>
+            </div>
+            <button class="btn-update" onclick="updateCalculParams()">METTRE À JOUR LES PARAMÈTRES ET LE COMPTEUR</button>
+        </div>
+
+        <div class="section">
+            <span class="section-title">Affichage de l'attente sur la TV (OUI / NON)</span>
+            <label style="margin-bottom: 10px;">Souhaitez-vous afficher la section "Attente Estimée" aux visiteurs ?</label>
+            <div class="flex-group">
+                <button class="btn-yes" onclick="setWaitTimeDisplay(true)">OUI (Afficher le bandeau)</button>
+                <button class="btn-no" onclick="setWaitTimeDisplay(false)">NON (Masquer le bandeau)</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <span class="section-title">Contrôle et Forçage Horaire</span>
+            <div class="flex-group">
+                <button class="btn-yes" style="background-color: #1e7e34;" onclick="sendCommand('PANEL_OUVERTURE')">FORCER L'OUVERTURE</button>
+                <button class="btn-no" style="background-color: #bd2130;" onclick="sendCommand('PANEL_FERMETURE')">FORCER LA FERMETURE</button>
+            </div>
+            <button class="btn-reset" onclick="sendCommand('PANEL_RESET_HORAIRE')">REPASSER EN MODE AUTOMATIQUE (SUIVRE PLANNING)</button>
+        </div>
+
     </div>
 </div>
 
@@ -47,28 +112,52 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <script>
-    // Configuration Firebase à compléter
+    // Configuration de votre base de données Firebase
     const firebaseConfig = {
         databaseURL: "VOTRE_FIREBASE_DB_URL"
     };
     firebase.initializeApp(firebaseConfig);
     
-    const RASPBERRY_ID = "attraction_36"; 
+    const RASPBERRY_ID = "attraction_36";
+    const dbRef = firebase.database().ref('attractions/' + RASPBERRY_ID);
 
-    function setWaitTimeDisplay(isVisible) {
-        firebase.database().ref('attractions/' + RASPBERRY_ID).update({
-            show_wait_time: isVisible
-        }).then(() => {
-            console.log("show_wait_time mis à jour : " + isVisible);
-        }).catch(err => console.error("Erreur Firebase :", err));
-    }
+    // Charger les valeurs actuelles au démarrage du panel pour éviter d'écraser des champs vides
+    dbRef.once('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            if (data.info_message) document.getElementById('info_message').value = data.info_message;
+            if (data.capa_heure) document.getElementById('capa_heure').value = data.capa_heure;
+            if (data.personnes) document.getElementById('personnes').value = data.personnes;
+            if (data.intervalle_secu) document.getElementById('intervalle_secu').value = data.intervalle_secu;
+            if (data.intervalle_calcul) document.getElementById('intervalle_calcul').value = data.intervalle_calcul;
+        }
+    });
 
     function sendCommand(cmdName) {
-        firebase.database().ref('attractions/' + RASPBERRY_ID).update({
-            commande_test: cmdName
-        }).then(() => {
-            console.log("Commande envoyée : " + cmdName);
-        }).catch(err => console.error("Erreur Firebase :", err));
+        dbRef.update({ commande_test: cmdName });
+    }
+
+    function setWaitTimeDisplay(isVisible) {
+        dbRef.update({ show_wait_time: isVisible });
+    }
+
+    function updateInfoText() {
+        const text = document.getElementById('info_message').value;
+        dbRef.update({ info_message: text });
+    }
+
+    function updateCalculParams() {
+        const capa = parseInt(document.getElementById('capa_heure').value);
+        const pers = parseInt(document.getElementById('personnes').value);
+        const secu = parseInt(document.getElementById('intervalle_secu').value);
+        const calc = parseInt(document.getElementById('intervalle_calcul').value);
+        
+        dbRef.update({
+            capa_heure: capa,
+            personnes: pers,
+            intervalle_secu: secu,
+            intervalle_calcul: calc
+        });
     }
 </script>
 </body>
