@@ -1,210 +1,34 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Drakkar - Gestion Attraction</title>
-    <style>
-        :root { --primary: #1a73e8; --secondary: #34a853; --warning: #fbbc04; --danger: #ea4335; --bg: #f0f2f5; --dark: #202124; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
-        .card { background: white; padding: 40px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); width: 100%; max-width: 520px; }
-        h1 { color: var(--dark); text-align: center; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 3px; font-size: 24px; border-bottom: 2px solid var(--primary); padding-bottom: 10px; }
-        h2 { font-size: 14px; color: #5f6368; margin-top: 20px; margin-bottom: 12px; border-left: 4px solid var(--primary); padding-left: 8px; text-transform: uppercase; font-weight: 600; }
-        .group { margin-bottom: 25px; }
-        .row { display: flex; gap: 10px; align-items: center; }
-        .grid-tests { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px; }
-        label { display: block; margin-bottom: 10px; font-weight: 600; color: #5f6368; font-size: 14px; }
-        input[type="number"], input[type="time"], select, textarea { width: 100%; padding: 14px; border: 2px solid #e0e0e0; border-radius: 12px; box-sizing: border-box; font-size: 16px; outline: none; transition: all 0.3s ease; background: #f8f9fa; }
-        .row input[type="number"] { text-align: center; padding: 10px; }
-        button { width: 100%; background: var(--primary); color: white; border: none; padding: 16px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.3s; margin-top: 10px; }
-        button:hover { background: #1557b0; transform: translateY(-2px); }
-        .btn-test { padding: 12px 5px; font-size: 13px; margin-top: 0; font-weight: bold; }
-        .btn-danger { background: var(--danger); } .btn-danger:hover { background: #c53026; }
-        .btn-warning { background: var(--warning); color: #000; } .btn-warning:hover { background: #dfa503; }
-        .btn-dark { background: var(--dark); } .btn-dark:hover { background: #000; }
-        .btn-secondary { background: var(--secondary); } .btn-secondary:hover { background: #278541; }
-        .section-block { margin-top: 30px; padding-top: 25px; border-top: 1px dashed #ddd; }
-        .days-select { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-        .day-checkbox { display: none; }
-        .day-label { padding: 8px 12px; background: #e8eaed; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; user-select: none; transition: 0.2s; }
-        .day-checkbox:checked + .day-label { background: var(--primary); color: white; }
-        .status { margin-top: 20px; text-align: center; color: var(--secondary); font-weight: bold; display: none; padding: 10px; background: #e6f4ea; border-radius: 8px; }
-    </style>
-</head>
-<body>
-
-<div class="card">
-    <h1>Le Drakkar</h1>
+<div class="panel-section" style="border: 1px solid #ccc; padding: 20px; border-radius: 8px; margin-top: 15px; font-family: Arial, sans-serif;">
+    <h3 style="margin-top: 0;">Configuration de l'Affichage de l'Écran</h3>
     
-    <h2>📢 Diffusion des Annonces Video</h2>
-    <div class="grid-tests">
-        <button class="btn-test btn-danger" onclick="declencherTest('SECURITE')">PLAY SECU</button>
-        <button class="btn-test btn-warning" onclick="declencherTest('TECHNIQUE')">PLAY TECH</button>
-        <button class="btn-test btn-dark" onclick="declencherTest('FERMETURE')">PLAY FERM</button>
-    </div>
-    <button class="btn-danger" style="margin-top: 0; margin-bottom: 25px; padding: 12px;" onclick="declencherTest('STOP_ANNONCE')">🛑 STOP ANNONCE EN COURS</button>
-
-    <h2>🚪 État de l'Attraction</h2>
-    <div class="grid-tests" style="margin-bottom: 25px;">
-        <button class="btn-test btn-secondary" onclick="declencherTest('PANEL_OUVERTURE')">OUVRIR</button>
-        <button class="btn-test btn-danger" onclick="declencherTest('PANEL_FERMETURE')">FERMER</button>
-        <button class="btn-test btn-dark" onclick="declencherTest('PANEL_RESET_HORAIRE')">AUTO (HORAIRES)</button>
-    </div>
-
-    <div class="group" style="background: #f1f3f4; padding: 20px; border-radius: 14px; border: 1px solid #e0e0e0;">
-        <label style="color: #202124; margin-bottom: 12px; font-size: 15px;">📅 Programmation Plage d'Activité</label>
-        
-        <div class="row" style="margin-bottom: 15px;">
-            <div style="flex: 1;">
-                <span style="font-size:12px; font-weight:bold; color: #5f6368;">Heure d'Allumage</span>
-                <input type="time" id="time_on" value="07:00">
-            </div>
-            <div style="flex: 1;">
-                <span style="font-size:12px; font-weight:bold; color: #5f6368;">Heure d'Extinction</span>
-                <input type="time" id="time_off" value="18:00">
-            </div>
-        </div>
-
-        <span style="font-size:12px; font-weight:bold; color: #5f6368;">Jours d'activation de la plage horaire</span>
-        <div class="days-select">
-            <input type="checkbox" id="d1" class="day-checkbox" value="1"><label for="d1" class="day-label">Lun</label>
-            <input type="checkbox" id="d2" class="day-checkbox" value="2"><label for="d2" class="day-label">Mar</label>
-            <input type="checkbox" id="d3" class="day-checkbox" value="3"><label for="d3" class="day-label">Mer</label>
-            <input type="checkbox" id="d4" class="day-checkbox" value="4"><label for="d4" class="day-label">Jeu</label>
-            <input type="checkbox" id="d5" class="day-checkbox" value="5"><label for="d5" class="day-label">Ven</label>
-            <input type="checkbox" id="d6" class="day-checkbox" value="6"><label for="d6" class="day-label">Sam</label>
-            <input type="checkbox" id="d0" class="day-checkbox" value="0"><label for="d0" class="day-label">Dim</label>
-        </div>
-    </div>
-
-    <div class="group">
-        <label>Capacité horaire (personnes/h)</label>
-        <input type="number" id="capa" placeholder="800">
-    </div>
-
-    <div class="group">
-        <label>Message informatif écran</label>
-        <textarea id="msg" rows="3"></textarea>
-    </div>
-
-    <div class="group">
-        <label>Intervalle diffusion consignes sécurité</label>
-        <div class="row">
-            <input type="number" id="int_h" value="0"> <span>h</span>
-            <input type="number" id="int_m" value="2"> <span>min</span>
-            <input type="number" id="int_s" value="0"> <span>sec</span>
-        </div>
-    </div>
-
-    <div class="group">
-        <label>Fréquence de calcul de l'attente</label>
-        <div class="row">
-            <input type="number" id="calc_m" value="0"> <span>min</span>
-            <input type="number" id="calc_s" value="7"> <span>sec</span>
-        </div>
-    </div>
-
-    <button onclick="envoyer()">METTRE À JOUR L'ÉCRAN</button>
-
-    <div class="section-block">
-        <label>Nouvelle bande son (.mp3)</label>
-        <input type="file" id="musicFile" accept=".mp3">
-        <button id="btnUpload" style="background: var(--secondary);">CHANGER LA MUSIQUE</button>
-    </div>
-
-    <div id="status" class="status">✅ Synchronisation terminée !</div>
+    <label style="font-weight: bold; display: block; margin-bottom: 10px;">
+        Afficher le Temps d'Attente Estimé sur l'Écran :
+    </label>
+    
+    <button id="btn_wait_yes" onclick="setWaitTimeDisplay(true)" style="background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 10px;">
+        OUI (Afficher)
+    </button>
+    
+    <button id="btn_wait_no" onclick="setWaitTimeDisplay(false)" style="background-color: #f44336; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+        NON (Masquer)
+    </button>
 </div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, update, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-    import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyDWob3NIJTPxrdpreSpDr__eaPJA2ZCTl0",
-        authDomain: "attraction-info.firebaseapp.com",
-        databaseURL: "https://attraction-info-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "attraction-info",
-        storageBucket: "attraction-info.firebasestorage.app"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const storage = getStorage(app);
-    const drakkarRef = ref(db, 'attractions/DRAKKAR');
-
-    onValue(drakkarRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-            if (document.activeElement.id !== 'capa') document.getElementById('capa').value = data.capa_heure || 800;
-            if (document.activeElement.id !== 'msg') document.getElementById('msg').value = data.info_message || "";
-            
-            if (data.horaires_ouverture) {
-                if (document.activeElement.id !== 'time_on') document.getElementById('time_on').value = data.horaires_ouverture.heure_ouverture || "07:00";
-                if (document.activeElement.id !== 'time_off') document.getElementById('time_off').value = data.horaires_ouverture.heure_fermeture || "18:00";
-                
-                let activeDays = data.horaires_ouverture.jours_actifs || [0,1,2,3,4,5,6];
-                document.querySelectorAll('.day-checkbox').forEach(cb => {
-                    cb.checked = activeDays.includes(parseInt(cb.value));
-                });
-            }
-            
-            let secSecu = data.intervalle_secu || 120;
-            document.getElementById('int_h').value = Math.floor(secSecu / 3600);
-            document.getElementById('int_m').value = Math.floor((secSecu % 3600) / 60);
-            document.getElementById('int_s').value = secSecu % 60;
-
-            let secCalc = data.intervalle_calcul || 7;
-            document.getElementById('calc_m').value = Math.floor(secCalc / 60);
-            document.getElementById('calc_s').value = secCalc % 60;
-        }
+<script>
+// Exemple de fonction JavaScript de liaison Firebase Database pour ton site
+function setWaitTimeDisplay(isVisible) {
+    // Remplacer RASPBERRY_ID par ton ID configuré (ex: attraction_36)
+    const raspberryId = "TON_RASPBERRY_ID"; 
+    
+    firebase.database().ref('attractions/' + raspberryId).update({
+        show_wait_time: isVisible
+    })
+    .then(() => {
+        console.log("Visibilité de l'attente modifiée : " + isVisible);
+        alert("L'affichage sur la TV a été mis à jour !");
+    })
+    .catch((error) => {
+        console.error("Erreur Firebase : ", error);
     });
-
-    window.declencherTest = function(typeCommande) {
-        update(drakkarRef, { commande_test: typeCommande }).then(showSuccess);
-    };
-
-    window.envoyer = function() {
-        let totalSecu = (parseInt(document.getElementById('int_h').value) || 0) * 3600 + (parseInt(document.getElementById('int_m').value) || 0) * 60 + (parseInt(document.getElementById('int_s').value) || 0);
-        let totalCalc = (parseInt(document.getElementById('calc_m').value) || 0) * 60 + (parseInt(document.getElementById('calc_s').value) || 0);
-
-        let checkedDays = [];
-        document.querySelectorAll('.day-checkbox:checked').forEach(cb => checkedDays.push(parseInt(cb.value)));
-
-        update(drakkarRef, {
-            capa_heure: parseInt(document.getElementById('capa').value) || 800,
-            info_message: document.getElementById('msg').value,
-            intervalle_secu: Math.max(10, totalSecu),
-            intervalle_calcul: Math.max(3, totalCalc),
-            horaires_ouverture: {
-                heure_ouverture: document.getElementById('time_on').value,
-                heure_fermeture: document.getElementById('time_off').value,
-                jours_actifs: checkedDays
-            }
-        }).then(showSuccess);
-    };
-
-    document.getElementById('btnUpload').onclick = function() {
-        const file = document.getElementById('musicFile').files[0];
-        if(!file) return alert("Veuillez sélectionner un fichier MP3.");
-        const btn = this; btn.disabled = true; btn.innerText = "CHARGEMENT...";
-        const musicRef = sRef(storage, 'musique_ambiance_drakkar.mp3');
-        
-        uploadBytes(musicRef, file).then(() => {
-            getDownloadURL(musicRef).then((url) => {
-                update(drakkarRef, { music_url: url, update_trigger: Date.now() }).then(() => {
-                    btn.disabled = false; btn.innerText = "CHANGER LA MUSIQUE"; showSuccess();
-                });
-            });
-        }).catch(err => {
-            alert("Erreur d'upload : " + err.message); btn.disabled = false; btn.innerText = "CHANGER LA MUSIQUE";
-        });
-    }
-
-    function showSuccess() { 
-        const s = document.getElementById('status'); s.style.display='block'; 
-        setTimeout(()=>s.style.display='none', 3000); 
-    }
+}
 </script>
-</body>
-</html>
