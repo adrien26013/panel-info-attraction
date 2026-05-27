@@ -34,8 +34,8 @@
         <div class="card">
             <span class="card-title">📅 Planning & Forçage</span>
             <div style="display:flex; gap:5px;">
-                <input type="time" id="h_ouv" value="07:00">
-                <input type="time" id="h_ferm" value="18:00">
+                <input type="time" id="h_ouv">
+                <input type="time" id="h_ferm">
             </div>
             <div class="days-input" id="days_check">
                 <label><input type="checkbox" value="1"> Lun</label><label><input type="checkbox" value="2"> Mar</label>
@@ -62,9 +62,9 @@
             </div>
             <input type="number" id="int_calc" placeholder="Intervalle calcul (s)">
             <div style="display:flex; gap:5px;">
-                <input type="number" id="secu_h" placeholder="H" value="0">
-                <input type="number" id="secu_m" placeholder="M" value="2">
-                <input type="number" id="secu_s" placeholder="S" value="0">
+                <input type="number" id="secu_h" placeholder="H">
+                <input type="number" id="secu_m" placeholder="M">
+                <input type="number" id="secu_s" placeholder="S">
             </div>
             <button class="btn-update" onclick="updateParams()">VALIDER PARAMÈTRES</button>
             <hr style="margin:15px 0;">
@@ -74,7 +74,7 @@
 
         <div class="card">
             <span class="card-title">📝 Message Défilant</span>
-            <input type="text" id="info_message" value="Bienvenue sur le Drakkar, prochain spectacle à 11h30, 14h00 et 16h30.">
+            <input type="text" id="info_message">
             <button class="btn-update" onclick="updateInfo()">METTRE À JOUR MESSAGE</button>
         </div>
     </div>
@@ -82,7 +82,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getDatabase, ref, update } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+    import { getDatabase, ref, update, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
     import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js";
 
     const firebaseConfig = {
@@ -98,6 +98,22 @@
     const storage = getStorage(app);
 
     window.selectedDates = [];
+
+    // Lecture des données au chargement
+    onValue(dbRef, (snapshot) => {
+        const data = snapshot.val();
+        if(!data) return;
+        if(data.info_message) document.getElementById('info_message').value = data.info_message;
+        if(data.intervalle_calcul) document.getElementById('int_calc').value = data.intervalle_calcul;
+        if(data.horaires_ouverture) {
+            document.getElementById('h_ouv').value = data.horaires_ouverture.heure_ouverture || "";
+            document.getElementById('h_ferm').value = data.horaires_ouverture.heure_fermeture || "";
+            if(data.horaires_ouverture.dates_speciales) {
+                window.selectedDates = data.horaires_ouverture.dates_speciales;
+                window.renderDates();
+            }
+        }
+    });
 
     window.renderDates = () => {
         document.getElementById('date_list').innerHTML = window.selectedDates.map(d => 
@@ -116,14 +132,10 @@
 
     window.sendCommand = (cmd) => update(dbRef, { commande_test: cmd });
     window.setWaitTime = (val) => update(dbRef, { show_wait_time: val });
-    window.setForce = (m) => update(dbRef, { 
-        force_open_panel: m==='OPEN', 
-        force_close_panel: m==='CLOSE',
-        mode_auto: m==='AUTO'
-    });
+    window.setForce = (m) => update(dbRef, { force_open_panel: m==='OPEN', force_close_panel: m==='CLOSE', mode_auto: m==='AUTO' });
     window.updateInfo = () => update(dbRef, { info_message: document.getElementById('info_message').value });
     window.updateParams = () => {
-        const total = (parseInt(document.getElementById('secu_h').value)*3600) + (parseInt(document.getElementById('secu_m').value)*60) + parseInt(document.getElementById('secu_s').value);
+        const total = (parseInt(document.getElementById('secu_h').value || 0)*3600) + (parseInt(document.getElementById('secu_m').value || 0)*60) + parseInt(document.getElementById('secu_s').value || 0);
         update(dbRef, { intervalle_secu: total, intervalle_calcul: parseInt(document.getElementById('int_calc').value) });
     };
     window.updateSchedule = () => {
