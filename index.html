@@ -4,16 +4,18 @@
     <meta charset="UTF-8">
     <title>Panel Drakkar | Admin Complet</title>
     <style>
-        :root { --primary: #005096; --danger: #dc3545; --success: #28a745; --info: #17a2b8; --bg: #f0f3f8; }
+        :root { --primary: #005096; --danger: #dc3545; --success: #28a745; --info: #17a2b8; --bg: #f0f3f8; --hover: #007bff; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); padding: 20px; }
         .container { max-width: 950px; margin: auto; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: transform 0.2s; }
         .card-title { font-weight: bold; color: var(--primary); margin-bottom: 15px; display: block; border-left: 4px solid var(--primary); padding-left: 8px; }
-        input, button { width: 100%; padding: 10px; margin-top: 5px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; }
-        .btn-update { background: var(--primary); color: white; cursor: pointer; font-weight: bold; }
+        input, button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; cursor: pointer; transition: all 0.2s; }
+        button:hover { filter: brightness(1.1); transform: scale(1.02); }
+        .btn-update { background: var(--primary); color: white; font-weight: bold; }
         .days-input { display: flex; gap: 5px; font-size: 11px; flex-wrap: wrap; margin-bottom: 10px; }
-        .date-tag { display: inline-block; background: #e2e8f0; padding: 4px 8px; border-radius: 4px; margin: 2px; font-size: 12px; cursor: pointer; }
+        .date-tag { display: inline-block; background: #e2e8f0; padding: 4px 8px; border-radius: 4px; margin: 2px; font-size: 12px; cursor: pointer; border: 1px solid #cbd5e0; }
+        .date-tag:hover { background: var(--danger); color: white; }
     </style>
 </head>
 <body>
@@ -23,14 +25,14 @@
     <div class="grid">
         <div class="card">
             <span class="card-title">🚨 Annonces Prioritaires</span>
-            <button onclick="sendCommand('SECURITE')">SÉCURITÉ</button>
-            <button onclick="sendCommand('TECHNIQUE')">TECHNIQUE</button>
-            <button onclick="sendCommand('FERMETURE')">FERMETURE</button>
+            <button onclick="sendCommand('SECURITE')" style="background:#f39c12; color:white;">SÉCURITÉ</button>
+            <button onclick="sendCommand('TECHNIQUE')" style="background:var(--info); color:white;">TECHNIQUE</button>
+            <button onclick="sendCommand('FERMETURE')" style="background:#6c757d; color:white;">FERMETURE</button>
             <button onclick="sendCommand('STOP_ANNONCE')" style="background:var(--danger); color:white;">ARRÊTER ANNONCE</button>
         </div>
 
         <div class="card">
-            <span class="card-title">📅 Planning & Dates</span>
+            <span class="card-title">📅 Planning & Forçage</span>
             <div style="display:flex; gap:5px;">
                 <input type="time" id="h_ouv" value="07:00">
                 <input type="time" id="h_ferm" value="18:00">
@@ -42,21 +44,21 @@
                 <label><input type="checkbox" value="0"> Dim</label>
             </div>
             <input type="date" id="date_input">
-            <button onclick="addDate()">AJOUTER DATE SPÉCIALE</button>
+            <button onclick="addDate()">+ AJOUTER DATE SPÉCIALE</button>
             <div id="date_list" style="margin:10px 0;"></div>
             <button class="btn-update" onclick="updateSchedule()">VALIDER PLANNING</button>
-            <div style="display:flex; gap:5px; margin-top:10px;">
-                <button onclick="setForce('OPEN')" style="background:var(--success); color:white;">FORCER OUVERT</button>
-                <button onclick="setForce('CLOSE')" style="background:var(--danger); color:white;">FORCER FERMÉ</button>
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px; margin-top:10px;">
+                <button onclick="setForce('OPEN')" style="background:var(--success); color:white; font-size:10px;">OUVERT</button>
+                <button onclick="setForce('CLOSE')" style="background:var(--danger); color:white; font-size:10px;">FERMÉ</button>
+                <button onclick="setForce('AUTO')" style="background:var(--info); color:white; font-size:10px;">RETOUR AUTO</button>
             </div>
         </div>
 
         <div class="card">
             <span class="card-title">⚙️ Paramètres & Musique</span>
-            <label>Affichage Attente :</label>
             <div style="display:flex; gap:5px; margin-bottom:10px;">
-                <button onclick="setWaitTime(true)">OUI</button>
-                <button onclick="setWaitTime(false)">NON</button>
+                <button onclick="setWaitTime(true)" style="background:var(--success); color:white;">Attente: OUI</button>
+                <button onclick="setWaitTime(false)" style="background:var(--danger); color:white;">Attente: NON</button>
             </div>
             <input type="number" id="int_calc" placeholder="Intervalle calcul (s)">
             <div style="display:flex; gap:5px;">
@@ -70,10 +72,10 @@
             <button class="btn-update" onclick="uploadMusic()" style="background:var(--info);">CHARGER MUSIQUE MP3</button>
         </div>
 
-        <div class="card" style="grid-column: span 1;">
+        <div class="card">
             <span class="card-title">📝 Message Défilant</span>
-            <input type="text" id="info_message" placeholder="Votre texte ici...">
-            <button class="btn-update" onclick="updateInfo()">METTRE À JOUR</button>
+            <input type="text" id="info_message" value="Bienvenue sur le Drakkar, prochain spectacle à 11h30, 14h00 et 16h30.">
+            <button class="btn-update" onclick="updateInfo()">METTRE À JOUR MESSAGE</button>
         </div>
     </div>
 </div>
@@ -104,10 +106,7 @@
 
     window.addDate = () => {
         const d = document.getElementById('date_input').value;
-        if(d && !window.selectedDates.includes(d)) { 
-            window.selectedDates.push(d); 
-            window.renderDates(); 
-        }
+        if(d && !window.selectedDates.includes(d)) { window.selectedDates.push(d); window.renderDates(); }
     };
 
     window.removeDate = (d) => {
@@ -117,24 +116,20 @@
 
     window.sendCommand = (cmd) => update(dbRef, { commande_test: cmd });
     window.setWaitTime = (val) => update(dbRef, { show_wait_time: val });
-    window.setForce = (m) => update(dbRef, { force_open_panel: m==='OPEN', force_close_panel: m==='CLOSE' });
+    window.setForce = (m) => update(dbRef, { 
+        force_open_panel: m==='OPEN', 
+        force_close_panel: m==='CLOSE',
+        mode_auto: m==='AUTO'
+    });
     window.updateInfo = () => update(dbRef, { info_message: document.getElementById('info_message').value });
-    
     window.updateParams = () => {
         const total = (parseInt(document.getElementById('secu_h').value)*3600) + (parseInt(document.getElementById('secu_m').value)*60) + parseInt(document.getElementById('secu_s').value);
         update(dbRef, { intervalle_secu: total, intervalle_calcul: parseInt(document.getElementById('int_calc').value) });
     };
-
     window.updateSchedule = () => {
         const days = Array.from(document.querySelectorAll('#days_check input:checked')).map(i => parseInt(i.value));
-        update(dbRef, { horaires_ouverture: { 
-            heure_ouverture: document.getElementById('h_ouv').value, 
-            heure_fermeture: document.getElementById('h_ferm').value, 
-            jours_actifs: days,
-            dates_speciales: window.selectedDates 
-        }});
+        update(dbRef, { horaires_ouverture: { heure_ouverture: document.getElementById('h_ouv').value, heure_fermeture: document.getElementById('h_ferm').value, jours_actifs: days, dates_speciales: window.selectedDates }});
     };
-
     window.uploadMusic = async () => {
         const file = document.getElementById('file_music').files[0];
         if(!file) return alert("Sélectionnez un MP3");
