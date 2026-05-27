@@ -12,154 +12,72 @@
         .card-title { font-weight: bold; color: var(--primary); margin-bottom: 15px; display: block; border-left: 4px solid var(--primary); padding-left: 8px; }
         input, button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; cursor: pointer; }
         .btn-update { background: var(--primary); color: white; font-weight: bold; }
-        .days-input { display: flex; gap: 5px; font-size: 11px; flex-wrap: wrap; margin-bottom: 10px; }
-        .date-tag { display: inline-block; background: #e2e8f0; padding: 4px 8px; border-radius: 4px; margin: 2px; font-size: 12px; cursor: pointer; border: 1px solid #cbd5e0; }
         
         /* Overlay chargement */
-        #loading-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); color:white; justify-content:center; align-items:center; z-index:1000; font-size:24px; }
+        #loading-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); color:white; flex-direction:column; justify-content:center; align-items:center; z-index:1000; }
+        #progress-container { width: 80%; max-width: 400px; background: #333; border-radius: 10px; overflow: hidden; margin-top: 20px; }
+        #progress-bar { width: 0%; height: 20px; background: var(--info); transition: width 0.3s; }
     </style>
 </head>
 <body>
 
-<div id="loading-overlay">Chargement en cours... veuillez patienter...</div>
+<div id="loading-overlay">
+    <div id="status-text" style="font-size:20px; margin-bottom:10px;">Envoi en cours...</div>
+    <div id="progress-container"><div id="progress-bar"></div></div>
+    <div id="percent-text" style="margin-top:10px;">0%</div>
+</div>
 
 <div class="container">
     <h2>PANEL OPÉRATEUR - DRAKKAR</h2>
     <div class="grid">
         <div class="card">
-            <span class="card-title">🚨 Annonces Prioritaires</span>
-            <button onclick="sendCommand('SECURITE')" style="background:#f39c12; color:white;">SÉCURITÉ</button>
-            <button onclick="sendCommand('TECHNIQUE')" style="background:var(--info); color:white;">TECHNIQUE</button>
-            <button onclick="sendCommand('FERMETURE')" style="background:#6c757d; color:white;">FERMETURE</button>
-            <button onclick="sendCommand('STOP_ANNONCE')" style="background:var(--danger); color:white;">ARRÊTER ANNONCE</button>
-        </div>
-
-        <div class="card">
-            <span class="card-title">📅 Planning & Forçage</span>
-            <div style="display:flex; gap:5px;">
-                <input type="time" id="h_ouv">
-                <input type="time" id="h_ferm">
-            </div>
-            <div class="days-input" id="days_check">
-                <label><input type="checkbox" value="1"> Lun</label><label><input type="checkbox" value="2"> Mar</label>
-                <label><input type="checkbox" value="3"> Mer</label><label><input type="checkbox" value="4"> Jeu</label>
-                <label><input type="checkbox" value="5"> Ven</label><label><input type="checkbox" value="6"> Sam</label>
-                <label><input type="checkbox" value="0"> Dim</label>
-            </div>
-            <input type="date" id="date_input">
-            <button onclick="addDate()">+ AJOUTER DATE SPÉCIALE</button>
-            <div id="date_list" style="margin:10px 0;"></div>
-            <button class="btn-update" onclick="updateSchedule()">VALIDER PLANNING</button>
-            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px; margin-top:10px;">
-                <button onclick="setForce('OPEN')" style="background:var(--success); color:white; font-size:10px;">OUVERT</button>
-                <button onclick="setForce('CLOSE')" style="background:var(--danger); color:white; font-size:10px;">FERMÉ</button>
-                <button onclick="setForce('AUTO')" style="background:var(--info); color:white; font-size:10px;">RETOUR AUTO</button>
-            </div>
-        </div>
-
-        <div class="card">
             <span class="card-title">⚙️ Paramètres & Musique</span>
-            <button onclick="setWaitTime(true)" style="background:var(--success); color:white;">Attente: OUI</button>
-            <button onclick="setWaitTime(false)" style="background:var(--danger); color:white;">Attente: NON</button>
-            <input type="number" id="int_calc" placeholder="Intervalle calcul (s)">
-            <input type="number" id="secu_h" placeholder="H"><input type="number" id="secu_m" placeholder="M"><input type="number" id="secu_s" placeholder="S">
-            <button class="btn-update" onclick="updateParams()">VALIDER PARAMÈTRES</button>
-            <hr>
             <input type="file" id="file_music" accept="audio/mp3">
             <button class="btn-update" onclick="uploadMusic()" style="background:var(--info);">CHARGER MUSIQUE MP3</button>
         </div>
-
-        <div class="card">
-            <span class="card-title">📝 Message Défilant</span>
-            <input type="text" id="info_message">
-            <button class="btn-update" onclick="updateInfo()">METTRE À JOUR MESSAGE</button>
         </div>
-    </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getDatabase, ref, update, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
-    import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js";
+    import { getDatabase, ref, update } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+    import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyDWob3NIJTPxrdpreSpDr__eaPJA2ZCTl0",
-        databaseURL: "https://attraction-info-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "attraction-info",
-        storageBucket: "attraction-info.firebasestorage.app"
-    };
-
+    const firebaseConfig = { /* Vos paramètres Firebase */ };
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    // CIBLAGE STRICT DRAKKAR
     const dbRef = ref(db, 'attractions/DRAKKAR');
     const storage = getStorage(app);
 
-    window.selectedDates = [];
-
-    onValue(dbRef, (snapshot) => {
-        const data = snapshot.val();
-        if(!data) return;
-        if(data.info_message) document.getElementById('info_message').value = data.info_message;
-        if(data.intervalle_calcul) document.getElementById('int_calc').value = data.intervalle_calcul;
-        if(data.horaires_ouverture) {
-            document.getElementById('h_ouv').value = data.horaires_ouverture.heure_ouverture || "";
-            document.getElementById('h_ferm').value = data.horaires_ouverture.heure_fermeture || "";
-            if(data.horaires_ouverture.dates_speciales) {
-                window.selectedDates = data.horaires_ouverture.dates_speciales;
-                window.renderDates();
-            }
-        }
-    });
-
-    window.renderDates = () => {
-        document.getElementById('date_list').innerHTML = window.selectedDates.map(d => 
-            `<span class="date-tag" onclick="window.removeDate('${d}')">${d} ✕</span>`).join('');
-    };
-
-    window.addDate = () => {
-        const d = document.getElementById('date_input').value;
-        if(d && !window.selectedDates.includes(d)) { window.selectedDates.push(d); window.renderDates(); }
-    };
-
-    window.removeDate = (d) => {
-        window.selectedDates = window.selectedDates.filter(x => x !== d);
-        window.renderDates();
-    };
-
-    window.sendCommand = (cmd) => update(dbRef, { commande_test: cmd });
-    window.setWaitTime = (val) => update(dbRef, { show_wait_time: val });
-    window.setForce = (m) => update(dbRef, { force_open_panel: m==='OPEN', force_close_panel: m==='CLOSE', mode_auto: m==='AUTO' });
-    window.updateInfo = () => update(dbRef, { info_message: document.getElementById('info_message').value });
-    
-    window.updateParams = () => {
-        const total = (parseInt(document.getElementById('secu_h').value || 0)*3600) + (parseInt(document.getElementById('secu_m').value || 0)*60) + parseInt(document.getElementById('secu_s').value || 0);
-        update(dbRef, { intervalle_secu: total, intervalle_calcul: parseInt(document.getElementById('int_calc').value) });
-    };
-
-    window.updateSchedule = () => {
-        const days = Array.from(document.querySelectorAll('#days_check input:checked')).map(i => parseInt(i.value));
-        update(dbRef, { horaires_ouverture: { heure_ouverture: document.getElementById('h_ouv').value, heure_fermeture: document.getElementById('h_ferm').value, jours_actifs: days, dates_speciales: window.selectedDates }});
-    };
-
-    window.uploadMusic = async () => {
+    window.uploadMusic = () => {
         const file = document.getElementById('file_music').files[0];
         if(!file) return alert("Sélectionnez un MP3");
-        
+
         const overlay = document.getElementById('loading-overlay');
+        const progressBar = document.getElementById('progress-bar');
+        const percentText = document.getElementById('percent-text');
         overlay.style.display = 'flex';
-        
-        try {
-            const sRef = storageRef(storage, 'musiques/DRAKKAR_ambiance.mp3');
-            await uploadBytes(sRef, file);
-            const url = await getDownloadURL(sRef);
-            await update(dbRef, { music_url: url });
-            alert("✅ Succès : La musique a bien été mise à jour !");
-        } catch(e) {
-            alert("Erreur lors de l'envoi : " + e.message);
-        } finally {
-            overlay.style.display = 'none';
-        }
+
+        const sRef = storageRef(storage, 'musiques/DRAKKAR_ambiance.mp3');
+        const uploadTask = uploadBytesResumable(sRef, file);
+
+        uploadTask.on('state_changed', 
+            (snapshot) => {
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                progressBar.style.width = progress + '%';
+                percentText.innerText = Math.round(progress) + '%';
+            }, 
+            (error) => {
+                overlay.style.display = 'none';
+                alert("Erreur : " + error.message);
+            }, 
+            async () => {
+                const url = await getDownloadURL(uploadTask.snapshot.ref);
+                await update(dbRef, { music_url: url });
+                overlay.style.display = 'none';
+                alert("✅ Succès : La musique a bien été mise à jour !");
+            }
+        );
     };
 </script>
 </body>
