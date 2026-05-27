@@ -120,17 +120,24 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <script>
-    // Configuration obligatoire
+    // Configuration officielle injectée de ton projet "attraction-info"
     const firebaseConfig = {
-        databaseURL: "VOTRE_FIREBASE_DB_URL"
+        apiKey: "AIzaSyDWob3NIJTPxrdpreSpDr__eaPJA2ZCTl0",
+        authDomain: "attraction-info.firebaseapp.com",
+        databaseURL: "https://attraction-info-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "attraction-info",
+        storageBucket: "attraction-info.firebasestorage.app",
+        messagingSenderId: "335011135222",
+        appId: "1:335011135222:web:db513acd348e55e20c76d7"
     };
+    
+    // Initialisation
     firebase.initializeApp(firebaseConfig);
     
-    // Identifiant cible synchronisé avec le config.py de votre Raspberry Pi
     const RASPBERRY_ID = "attraction_36";
     const dbRef = firebase.database().ref('attractions/' + RASPBERRY_ID);
 
-    // Écoute de l'état actuel de la base de données
+    // Synchronisation automatique en réception (remplit les inputs si changés ailleurs)
     dbRef.on('value', (snapshot) => {
         const data = snapshot.val();
         if (data) {
@@ -156,23 +163,23 @@
     });
 
     function sendCommand(cmdName) {
-        console.log("[WEB PANEL] Émission commande action : " + cmdName);
+        console.log("[WEB PANEL] Click commande : " + cmdName);
         dbRef.update({ commande_test: cmdName });
     }
 
     function setWaitTimeDisplay(isVisible) {
-        console.log("[WEB PANEL] Émission visibilité attente : " + isVisible);
+        console.log("[WEB PANEL] Click affichage attente : " + isVisible);
         dbRef.update({ show_wait_time: isVisible });
     }
 
     function updateMusicUrl() {
         const urlValue = document.getElementById('music_url').value.trim();
-        console.log("[WEB PANEL] Émission URL musique distante : " + urlValue);
+        console.log("[WEB PANEL] Click musique distante : " + urlValue);
         dbRef.update({ music_url: urlValue });
     }
 
     function setManualForce(mode) {
-        console.log("[WEB PANEL] Émission changement mode horaire : " + mode);
+        console.log("[WEB PANEL] Click mode horaire : " + mode);
         if (mode === 'OPEN') {
             dbRef.update({ force_open_panel: true, force_close_panel: false });
         } else if (mode === 'CLOSE') {
@@ -184,22 +191,17 @@
 
     function updateInfoText() {
         const text = document.getElementById('info_message').value;
-        console.log("[WEB PANEL] Émission texte défilant : " + text);
+        console.log("[WEB PANEL] Click mise à jour texte : " + text);
         dbRef.update({ info_message: text });
     }
 
     function updateCalculParams() {
-        const capa = parseInt(document.getElementById('capa_heure').value) || 800;
-        const pers = parseInt(document.getElementById('personnes').value) || 0;
-        const secu = parseInt(document.getElementById('intervalle_secu').value) || 120;
-        const calc = parseInt(document.getElementById('intervalle_calcul').value) || 7;
-        
-        console.log("[WEB PANEL] Émission des paramètres de calcul...");
+        console.log("[WEB PANEL] Click mise à jour paramètres numériques...");
         dbRef.update({
-            capa_heure: capa,
-            personnes: pers,
-            intervalle_secu: secu,
-            intervalle_calcul: calc
+            capa_heure: parseInt(document.getElementById('capa_heure').value) || 800,
+            personnes: parseInt(document.getElementById('personnes').value) || 0,
+            intervalle_secu: parseInt(document.getElementById('intervalle_secu').value) || 120,
+            intervalle_calcul: parseInt(document.getElementById('intervalle_calcul').value) || 7
         });
     }
 </script>
