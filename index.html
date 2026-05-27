@@ -96,6 +96,15 @@
         </div>
 
         <div class="section">
+            <span class="section-title">Gestion de la Musique d'Ambiance Distante</span>
+            <div class="form-group">
+                <label for="music_url">Lien URL direct de la Musique (MP3 / Flux Stream) :</label>
+                <input type="text" id="music_url" placeholder="Laissez vide pour utiliser la musique locale du RPi">
+            </div>
+            <button class="btn-update" style="background-color: #008080;" onclick="updateMusicUrl()">APPLIQUER LA MUSIQUE À DISTANCE</button>
+        </div>
+
+        <div class="section">
             <span class="section-title">Contrôle et Forçage Horaire</span>
             <div class="flex-group">
                 <button class="btn-yes" style="background-color: #1e7e34;" onclick="setManualForce('OPEN')">FORCER L'OUVERTURE</button>
@@ -111,16 +120,17 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <script>
-    // Configuration de votre base de données Firebase
+    // Configuration obligatoire
     const firebaseConfig = {
         databaseURL: "VOTRE_FIREBASE_DB_URL"
     };
     firebase.initializeApp(firebaseConfig);
     
+    // Identifiant cible synchronisé avec le config.py de votre Raspberry Pi
     const RASPBERRY_ID = "attraction_36";
     const dbRef = firebase.database().ref('attractions/' + RASPBERRY_ID);
 
-    // Initialisation et Synchronisation Descendante continue
+    // Écoute de l'état actuel de la base de données
     dbRef.on('value', (snapshot) => {
         const data = snapshot.val();
         if (data) {
@@ -139,24 +149,30 @@
             if (data.intervalle_calcul !== undefined && document.activeElement !== document.getElementById('intervalle_calcul')) {
                 document.getElementById('intervalle_calcul').value = data.intervalle_calcul;
             }
+            if (data.music_url !== undefined && document.activeElement !== document.getElementById('music_url')) {
+                document.getElementById('music_url').value = data.music_url;
+            }
         }
     });
 
-    // Envoi securise d'une commande video (remplace l'objet entier pour reveiller l'ecouteur Python)
     function sendCommand(cmdName) {
-        console.log("Envoi de la commande video : " + cmdName);
+        console.log("[WEB PANEL] Émission commande action : " + cmdName);
         dbRef.update({ commande_test: cmdName });
     }
 
-    // Gestion de l'interrupteur OUI/NON
     function setWaitTimeDisplay(isVisible) {
-        console.log("Envoi visibilite attente : " + isVisible);
+        console.log("[WEB PANEL] Émission visibilité attente : " + isVisible);
         dbRef.update({ show_wait_time: isVisible });
     }
 
-    // Gestion propre des forcages et resets horaires sans ecraser le reste
+    function updateMusicUrl() {
+        const urlValue = document.getElementById('music_url').value.trim();
+        console.log("[WEB PANEL] Émission URL musique distante : " + urlValue);
+        dbRef.update({ music_url: urlValue });
+    }
+
     function setManualForce(mode) {
-        console.log("Envoi forcage mode horaire : " + mode);
+        console.log("[WEB PANEL] Émission changement mode horaire : " + mode);
         if (mode === 'OPEN') {
             dbRef.update({ force_open_panel: true, force_close_panel: false });
         } else if (mode === 'CLOSE') {
@@ -166,21 +182,19 @@
         }
     }
 
-    // Envoi manuel de l'information texte
     function updateInfoText() {
         const text = document.getElementById('info_message').value;
-        console.log("Envoi du nouveau texte d'info : " + text);
+        console.log("[WEB PANEL] Émission texte défilant : " + text);
         dbRef.update({ info_message: text });
     }
 
-    // Mise a jour globale des compteurs numeriques
     function updateCalculParams() {
         const capa = parseInt(document.getElementById('capa_heure').value) || 800;
         const pers = parseInt(document.getElementById('personnes').value) || 0;
         const secu = parseInt(document.getElementById('intervalle_secu').value) || 120;
         const calc = parseInt(document.getElementById('intervalle_calcul').value) || 7;
         
-        console.log("Envoi des parametres numeriques de calcul d'attente...");
+        console.log("[WEB PANEL] Émission des paramètres de calcul...");
         dbRef.update({
             capa_heure: capa,
             personnes: pers,
