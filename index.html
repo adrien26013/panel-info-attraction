@@ -27,8 +27,6 @@
         .day-checkbox { display: none; }
         .day-label { padding: 8px 12px; background: #e8eaed; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; user-select: none; transition: 0.2s; }
         .day-checkbox:checked + .day-label { background: var(--primary); color: white; }
-        .schedule-list { margin-top: 15px; max-height: 150px; overflow-y: auto; background: #f8f9fa; border-radius: 12px; padding: 10px; border: 1px solid #e0e0e0; }
-        .schedule-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px 12px; border-radius: 8px; margin-bottom: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-size: 13px; }
         .status { margin-top: 20px; text-align: center; color: var(--secondary); font-weight: bold; display: none; padding: 10px; background: #e6f4ea; border-radius: 8px; }
     </style>
 </head>
@@ -44,17 +42,29 @@
         <button class="btn-test btn-dark" onclick="declencherTest('FERMETURE')">FERMETURE</button>
     </div>
 
-    <div class="group" style="background: #f1f3f4; padding: 15px; border-radius: 14px;">
-        <label style="color: #202124;">Plage Horaire d'Activité</label>
-        <div class="row">
-            <div>
-                <span style="font-size:12px; font-weight:bold;">Allumage</span>
+    <div class="group" style="background: #f1f3f4; padding: 20px; border-radius: 14px; border: 1px solid #e0e0e0;">
+        <label style="color: #202124; margin-bottom: 12px; font-size: 15px;">📅 Programmation Plage d'Activité</label>
+        
+        <div class="row" style="margin-bottom: 15px;">
+            <div style="flex: 1;">
+                <span style="font-size:12px; font-weight:bold; color: #5f6368;">Heure d'Allumage</span>
                 <input type="time" id="time_on" value="07:00">
             </div>
-            <div>
-                <span style="font-size:12px; font-weight:bold;">Extinction</span>
+            <div style="flex: 1;">
+                <span style="font-size:12px; font-weight:bold; color: #5f6368;">Heure d'Extinction</span>
                 <input type="time" id="time_off" value="18:00">
             </div>
+        </div>
+
+        <span style="font-size:12px; font-weight:bold; color: #5f6368;">Jours d'activation de la plage horaire</span>
+        <div class="days-select">
+            <input type="checkbox" id="d1" class="day-checkbox" value="1"><label for="d1" class="day-label">Lun</label>
+            <input type="checkbox" id="d2" class="day-checkbox" value="2"><label for="d2" class="day-label">Mar</label>
+            <input type="checkbox" id="d3" class="day-checkbox" value="3"><label for="d3" class="day-label">Mer</label>
+            <input type="checkbox" id="d4" class="day-checkbox" value="4"><label for="d4" class="day-label">Jeu</label>
+            <input type="checkbox" id="d5" class="day-checkbox" value="5"><label for="d5" class="day-label">Ven</label>
+            <input type="checkbox" id="d6" class="day-checkbox" value="6"><label for="d6" class="day-label">Sam</label>
+            <input type="checkbox" id="d0" class="day-checkbox" value="0"><label for="d0" class="day-label">Dim</label>
         </div>
     </div>
 
@@ -88,37 +98,6 @@
     <button onclick="envoyer()">METTRE À JOUR L'ÉCRAN</button>
 
     <div class="section-block">
-        <h2>Planification d'Annonces Événementielles</h2>
-        <div class="group">
-            <label>Type de diffusion</label>
-            <select id="sched_type">
-                <option value="SECURITE">Consignes de Sécurité</option>
-                <option value="TECHNIQUE">Intervention Technique</option>
-                <option value="FERMETURE">Annonce de Fermeture</option>
-            </select>
-        </div>
-        <div class="group">
-            <label>Heure exacte</label>
-            <input type="time" id="sched_time" value="12:00">
-        </div>
-        <div class="group">
-            <label>Jours d'activation</label>
-            <div class="days-select">
-                <input type="checkbox" id="d1" class="day-checkbox" value="1"><label for="d1" class="day-label">Lun</label>
-                <input type="checkbox" id="d2" class="day-checkbox" value="2"><label for="d2" class="day-label">Mar</label>
-                <input type="checkbox" id="d3" class="day-checkbox" value="3"><label for="d3" class="day-label">Mer</label>
-                <input type="checkbox" id="d4" class="day-checkbox" value="4"><label for="d4" class="day-label">Jeu</label>
-                <input type="checkbox" id="d5" class="day-checkbox" value="5"><label for="d5" class="day-label">Ven</label>
-                <input type="checkbox" id="d6" class="day-checkbox" value="6"><label for="d6" class="day-label">Sam</label>
-                <input type="checkbox" id="d0" class="day-checkbox" value="0"><label for="d0" class="day-label">Dim</label>
-            </div>
-        </div>
-        <button id="btnAddSchedule" style="background: var(--dark); padding: 12px;">AJOUTER À LA PROGRAMMATION</button>
-        
-        <div class="schedule-list" id="scheduleList"></div>
-    </div>
-
-    <div class="section-block">
         <label>Nouvelle bande son (.mp3)</label>
         <input type="file" id="musicFile" accept=".mp3">
         <button id="btnUpload" style="background: var(--secondary);">CHANGER LA MUSIQUE</button>
@@ -145,15 +124,23 @@
     const storage = getStorage(app);
     const drakkarRef = ref(db, 'attractions/DRAKKAR');
 
-    let currentSchedules = {};
-
     onValue(drakkarRef, (snapshot) => {
         const data = snapshot.val();
         if (data) {
             if (document.activeElement.id !== 'capa') document.getElementById('capa').value = data.capa_heure || 800;
             if (document.activeElement.id !== 'msg') document.getElementById('msg').value = data.info_message || "";
-            if (document.activeElement.id !== 'time_on') document.getElementById('time_on').value = data.heure_ouverture || "07:00";
-            if (document.activeElement.id !== 'time_off') document.getElementById('time_off').value = data.heure_fermeture || "18:00";
+            
+            // Récupération de la plage horaire complexe
+            if (data.horaires_ouverture) {
+                if (document.activeElement.id !== 'time_on') document.getElementById('time_on').value = data.horaires_ouverture.heure_ouverture || "07:00";
+                if (document.activeElement.id !== 'time_off') document.getElementById('time_off').value = data.horaires_ouverture.heure_fermeture || "18:00";
+                
+                // Coche des jours
+                let activeDays = data.horaires_ouverture.jours_actifs || [0,1,2,3,4,5,6];
+                document.querySelectorAll('.day-checkbox').forEach(cb => {
+                    cb.checked = activeDays.includes(parseInt(cb.value));
+                });
+            }
             
             let secSecu = data.intervalle_secu || 120;
             document.getElementById('int_h').value = Math.floor(secSecu / 3600);
@@ -163,9 +150,6 @@
             let secCalc = data.intervalle_calcul || 7;
             document.getElementById('calc_m').value = Math.floor(secCalc / 60);
             document.getElementById('calc_s').value = secCalc % 60;
-
-            currentSchedules = data.planning || {};
-            renderScheduleList(currentSchedules);
         }
     });
 
@@ -177,54 +161,21 @@
         let totalSecu = (parseInt(document.getElementById('int_h').value) || 0) * 3600 + (parseInt(document.getElementById('int_m').value) || 0) * 60 + (parseInt(document.getElementById('int_s').value) || 0);
         let totalCalc = (parseInt(document.getElementById('calc_m').value) || 0) * 60 + (parseInt(document.getElementById('calc_s').value) || 0);
 
+        let checkedDays = [];
+        document.querySelectorAll('.day-checkbox:checked').forEach(cb => checkedDays.push(parseInt(cb.value)));
+
         update(drakkarRef, {
             capa_heure: parseInt(document.getElementById('capa').value) || 800,
             info_message: document.getElementById('msg').value,
             intervalle_secu: Math.max(10, totalSecu),
             intervalle_calcul: Math.max(3, totalCalc),
-            heure_ouverture: document.getElementById('time_on').value,
-            heure_fermeture: document.getElementById('time_off').value
+            horaires_ouverture: {
+                heure_ouverture: document.getElementById('time_on').value,
+                heure_fermeture: document.getElementById('time_off').value,
+                jours_actifs: checkedDays
+            }
         }).then(showSuccess);
     };
-
-    document.getElementById('btnAddSchedule').onclick = function() {
-        const type = document.getElementById('sched_type').value;
-        const timeVal = document.getElementById('sched_time').value;
-        let checkedDays = [];
-        document.querySelectorAll('.day-checkbox:checked').forEach(cb => checkedDays.push(parseInt(cb.value)));
-
-        if(checkedDays.length === 0) return alert("Veuillez cocher au moins un jour.");
-        if(!timeVal) return alert("Veuillez sélectionner une heure.");
-
-        const scheduleId = "sched_" + Date.now();
-        currentSchedules[scheduleId] = { id: scheduleId, type: type, time: timeVal, days: checkedDays };
-
-        update(drakkarRef, { planning: currentSchedules }).then(() => {
-            document.querySelectorAll('.day-checkbox').forEach(cb => cb.checked = false);
-            showSuccess();
-        });
-    };
-
-    window.deleteSchedule = function(id) {
-        delete currentSchedules[id];
-        update(drakkarRef, { planning: currentSchedules });
-    };
-
-    function renderScheduleList(schedules) {
-        const container = document.getElementById('scheduleList');
-        container.innerHTML = "";
-        const dayNames = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
-        
-        Object.keys(schedules).forEach(key => {
-            const s = schedules[key];
-            const itemJours = s.days.map(d => dayNames[d]).join(', ');
-            const div = document.createElement('div');
-            div.className = 'schedule-item';
-            div.innerHTML = `<div><strong>[${s.type}]</strong> à ${s.time} (${itemJours})</div>
-                             <button class="btn-delete" style="width:auto;margin:0;padding:6px 10px;background:var(--danger);font-size:12px;" onclick="deleteSchedule('${s.id}')">X</button>`;
-            container.appendChild(div);
-        });
-    }
 
     document.getElementById('btnUpload').onclick = function() {
         const file = document.getElementById('musicFile').files[0];
