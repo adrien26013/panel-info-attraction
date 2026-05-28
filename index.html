@@ -115,7 +115,6 @@
         const data = snapshot.val();
         if(!data) return;
         
-        // MODIF : Affichage du mode
         const modeEl = document.getElementById('status_mode');
         modeEl.innerText = data.mode_auto ? "MODE : AUTOMATIQUE" : "MODE : MANUEL (FORCÉ)";
         modeEl.style.color = data.mode_auto ? "var(--info)" : "var(--danger)";
@@ -139,11 +138,15 @@
     window.sendCommand = (cmd) => update(dbRef, { commande_test: cmd }).then(() => showSuccess());
     window.setWaitTime = (val) => update(dbRef, { show_wait_time: val }).then(() => showSuccess());
     
-    // MODIF : Gestion du forçage avec mode_auto
+    // CORRIGÉ ICI : Réinitialisation propre des flags de forçage
     window.setForce = (m) => {
-        const payload = { mode_auto: (m === 'AUTO') };
-        if (m === 'OPEN') { payload.force_open_panel = true; payload.force_close_panel = false; }
-        if (m === 'CLOSE') { payload.force_open_panel = false; payload.force_close_panel = true; }
+        const payload = { 
+            mode_auto: (m === 'AUTO'),
+            force_open_panel: false,
+            force_close_panel: false 
+        };
+        if (m === 'OPEN') { payload.force_open_panel = true; }
+        if (m === 'CLOSE') { payload.force_close_panel = true; }
         update(dbRef, payload).then(() => showSuccess());
     };
 
