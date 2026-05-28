@@ -145,8 +145,26 @@
     };
 
     window.updateSchedule = () => {
-        update(dbRef, { horaires_ouverture: { heure_ouverture: document.getElementById('h_ouv').value, heure_fermeture: document.getElementById('h_ferm').value, dates_ouverture: window.selectedDates }}).then(() => showSuccess());
+    // On force la valeur des inputs avant l'envoi
+    const payload = {
+        horaires_ouverture: {
+            heure_ouverture: document.getElementById('h_ouv').value,
+            heure_fermeture: document.getElementById('h_ferm').value,
+            dates_ouverture: window.selectedDates
+        }
     };
+    
+    // Utiliser update directement sur la référence dbRef
+    update(dbRef, payload)
+        .then(() => {
+            console.log("Planning mis à jour avec succès");
+            showSuccess();
+        })
+        .catch((error) => {
+            console.error("Erreur de mise à jour : ", error);
+            alert("Erreur lors de la validation. Vérifiez votre connexion.");
+        });
+};
 
     window.cancelUpload = () => { if(currentTask) currentTask.cancel(); document.getElementById('loading-overlay').style.display = 'none'; };
 
