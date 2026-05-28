@@ -3,236 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <title>Panel Drakkar | Admin Complet</title>
-
     <style>
-
-        :root {
-            --primary: #005096;
-            --danger: #dc3545;
-            --success: #28a745;
-            --info: #17a2b8;
-            --bg: #f0f3f8;
-            --hover: #007bff;
-        }
-
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: var(--bg);
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 950px;
-            margin: auto;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        .card {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
-        }
-
-        .card-title {
-            font-weight: bold;
-            color: var(--primary);
-            margin-bottom: 15px;
-            display: block;
-            border-left: 4px solid var(--primary);
-            padding-left: 8px;
-        }
-
-        input,
-        button {
-            width: 100%;
-            padding: 12px;
-            margin-top: 8px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            box-sizing: border-box;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        button:hover {
-            filter: brightness(1.1);
-            transform: scale(1.02);
-        }
-
-        .btn-update {
-            background: var(--primary);
-            color: white;
-            font-weight: bold;
-        }
-
-        .date-tag {
-            display: inline-block;
-            background: #e2e8f0;
-            padding: 4px 8px;
-            border-radius: 4px;
-            margin: 2px;
-            font-size: 12px;
-            cursor: pointer;
-            border: 1px solid #cbd5e0;
-        }
-
-        .date-tag:hover {
-            background: #dc3545;
-            color: white;
-        }
-
-        #loading-overlay {
-            display: none;
-            position: fixed;
-            top:0;
-            left:0;
-            width:100%;
-            height:100%;
-            background:rgba(0,0,0,0.85);
-            color:white;
-            flex-direction:column;
-            justify-content:center;
-            align-items:center;
-            z-index:1000;
-        }
-
-        #progress-container {
-            width: 80%;
-            max-width: 400px;
-            background: #333;
-            border-radius: 10px;
-            overflow: hidden;
-            margin-top: 20px;
-        }
-
-        #progress-bar {
-            width: 0%;
-            height: 20px;
-            background: #17a2b8;
-            transition: width 0.3s;
-        }
-
-        #success-popup {
-            display:none;
-            position:fixed;
-            top:0;
-            left:0;
-            width:100%;
-            height:100%;
-            background:rgba(0,0,0,0.8);
-            color:white;
-            flex-direction:column;
-            justify-content:center;
-            align-items:center;
-            z-index:2000;
-        }
-
+        :root { --primary: #005096; --danger: #dc3545; --success: #28a745; --info: #17a2b8; --bg: #f0f3f8; --hover: #007bff; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); padding: 20px; }
+        .container { max-width: 950px; margin: auto; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: transform 0.2s; }
+        .card-title { font-weight: bold; color: var(--primary); margin-bottom: 15px; display: block; border-left: 4px solid var(--primary); padding-left: 8px; }
+        input, button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; cursor: pointer; transition: all 0.2s; }
+        button:hover { filter: brightness(1.1); transform: scale(1.02); }
+        .btn-update { background: var(--primary); color: white; font-weight: bold; }
+        .date-tag { display: inline-block; background: #e2e8f0; padding: 4px 8px; border-radius: 4px; margin: 2px; font-size: 12px; cursor: pointer; border: 1px solid #cbd5e0; }
+        .date-tag:hover { background: #dc3545; color: white; }
+        
+        #loading-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); color:white; flex-direction:column; justify-content:center; align-items:center; z-index:1000; }
+        #progress-container { width: 80%; max-width: 400px; background: #333; border-radius: 10px; overflow: hidden; margin-top: 20px; }
+        #progress-bar { width: 0%; height: 20px; background: #17a2b8; transition: width 0.3s; }
+        #success-popup { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); color:white; flex-direction:column; justify-content:center; align-items:center; z-index:2000; }
     </style>
 </head>
-
 <body>
 
 <div id="loading-overlay">
-
-    <div id="status-text"
-         style="font-size:20px; margin-bottom:10px;">
-        Envoi en cours...
-    </div>
-
-    <div id="progress-container">
-        <div id="progress-bar"></div>
-    </div>
-
-    <div id="percent-text" style="margin-top:10px;">
-        0%
-    </div>
-
-    <button
-        onclick="cancelUpload()"
-        style="width:auto; margin-top:20px; background:var(--danger); color:white;"
-    >
-        ANNULER
-    </button>
-
+    <div id="status-text" style="font-size:20px; margin-bottom:10px;">Envoi en cours...</div>
+    <div id="progress-container"><div id="progress-bar"></div></div>
+    <div id="percent-text" style="margin-top:10px;">0%</div>
+    <button onclick="cancelUpload()" style="width:auto; margin-top:20px; background:var(--danger); color:white;">ANNULER</button>
 </div>
 
-<div id="success-popup"
-     onclick="this.style.display='none'">
-
-    <div style="background:white; color:black; padding:20px; border-radius:10px; font-weight:bold;">
-        ✅ Synchronisation effectuée avec succès !
-    </div>
-
+<div id="success-popup" onclick="this.style.display='none'">
+    <div style="background:white; color:black; padding:20px; border-radius:10px; font-weight:bold;">✅ Synchronisation effectuée avec succès !</div>
 </div>
 
 <div class="container">
-
     <h2>PANEL OPÉRATEUR - DRAKKAR</h2>
-
     <div class="grid">
 
         <div class="card">
-
-            <span class="card-title">
-                🚨 Annonces Prioritaires
-            </span>
-
-            <button
-                onclick="sendCommand('SECURITE')"
-                style="background:#f39c12; color:white;"
-            >
-                SÉCURITÉ
-            </button>
-
-            <button
-                onclick="sendCommand('TECHNIQUE')"
-                style="background:var(--info); color:white;"
-            >
-                TECHNIQUE
-            </button>
-
-            <button
-                onclick="sendCommand('FERMETURE')"
-                style="background:#6c757d; color:white;"
-            >
-                FERMETURE
-            </button>
-
-            <button
-                onclick="sendCommand('STOP_ANNONCE')"
-                style="background:var(--danger); color:white;"
-            >
-                ARRÊTER ANNONCE
-            </button>
-
+            <span class="card-title">🚨 Annonces Prioritaires</span>
+            <button onclick="sendCommand('SECURITE')" style="background:#f39c12; color:white;">SÉCURITÉ</button>
+            <button onclick="sendCommand('TECHNIQUE')" style="background:var(--info); color:white;">TECHNIQUE</button>
+            <button onclick="sendCommand('FERMETURE')" style="background:#6c757d; color:white;">FERMETURE</button>
+            <button onclick="sendCommand('STOP_ANNONCE')" style="background:var(--danger); color:white;">ARRÊTER ANNONCE</button>
         </div>
 
         <div class="card">
+            <span class="card-title">📅 Planning & Forçage</span>
 
-            <span class="card-title">
-                📅 Planning & Forçage
-            </span>
-
-            <div
-                id="status_mode"
-                style="padding:10px; margin-bottom:10px; text-align:center; border-radius:5px; font-weight:bold; background:#eee;"
-            >
+            <div id="status_mode"
+                 style="padding:10px; margin-bottom:10px; text-align:center; border-radius:5px; font-weight:bold; background:#eee;">
                 MODE : CHARGEMENT...
             </div>
 
             <div style="display:flex; gap:5px;">
-
                 <input type="time" id="h_ouv">
-
                 <input type="time" id="h_ferm">
-
             </div>
 
             <div style="font-size:12px; margin-top:10px;">
@@ -247,127 +72,105 @@
 
             <div id="date_list" style="margin:10px 0;"></div>
 
-            <button
-                class="btn-update"
-                onclick="updateSchedule()"
-            >
+            <button class="btn-update" onclick="updateSchedule()">
                 VALIDER PLANNING
             </button>
 
-            <div
-                style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px; margin-top:10px;"
-            >
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px; margin-top:10px;">
 
-                <button
-                    onclick="setForce('OPEN')"
-                    style="background:var(--success); color:white; font-size:10px;"
-                >
+                <button onclick="setForce('OPEN')"
+                        style="background:var(--success); color:white; font-size:10px;">
                     OUVERT
                 </button>
 
-                <button
-                    onclick="setForce('CLOSE')"
-                    style="background:var(--danger); color:white; font-size:10px;"
-                >
+                <button onclick="setForce('CLOSE')"
+                        style="background:var(--danger); color:white; font-size:10px;">
                     FERMÉ
                 </button>
 
-                <button
-                    onclick="setForce('AUTO')"
-                    style="background:var(--info); color:white; font-size:10px;"
-                >
+                <button onclick="setForce('AUTO')"
+                        style="background:var(--info); color:white; font-size:10px;">
                     RETOUR AUTO
                 </button>
 
             </div>
-
         </div>
 
         <div class="card">
-
-            <span class="card-title">
-                ⚙️ Paramètres & Musique
-            </span>
+            <span class="card-title">⚙️ Paramètres & Musique</span>
 
             <div style="display:flex; gap:5px; margin-bottom:10px;">
-
-                <button
-                    onclick="setWaitTime(true)"
-                    style="background:var(--success); color:white;"
-                >
+                <button onclick="setWaitTime(true)"
+                        style="background:var(--success); color:white;">
                     Attente: OUI
                 </button>
 
-                <button
-                    onclick="setWaitTime(false)"
-                    style="background:var(--danger); color:white;"
-                >
+                <button onclick="setWaitTime(false)"
+                        style="background:var(--danger); color:white;">
                     Attente: NON
                 </button>
-
             </div>
 
-            <input
-                type="number"
-                id="capacite"
-                placeholder="Capacité"
-            >
+            <input type="number"
+                   id="capacite"
+                   placeholder="Capacité">
 
-            <input
-                type="number"
-                id="int_calc"
-                placeholder="Intervalle calcul (s)"
-            >
+            <input type="number"
+                   id="int_calc"
+                   placeholder="Intervalle calcul (s)">
 
             <div style="display:flex; gap:5px;">
 
-                <input
-                    type="number"
-                    id="secu_h"
-                    placeholder="H"
-                >
+                <input type="number"
+                       id="secu_h"
+                       placeholder="H">
 
-                <input
-                    type="number"
-                    id="secu_m"
-                    placeholder="M"
-                >
+                <input type="number"
+                       id="secu_m"
+                       placeholder="M">
 
-                <input
-                    type="number"
-                    id="secu_s"
-                    placeholder="S"
-                >
+                <input type="number"
+                       id="secu_s"
+                       placeholder="S">
 
             </div>
 
-            <button
-                class="btn-update"
-                onclick="updateParams()"
-            >
+            <button class="btn-update"
+                    onclick="updateParams()">
                 VALIDER PARAMÈTRES
             </button>
 
             <hr style="margin:15px 0;">
 
-            <input
-                type="file"
-                id="file_music"
-                accept="audio/mp3"
-            >
+            <input type="file"
+                   id="file_music"
+                   accept="audio/mp3">
 
-            <button
-                class="btn-update"
-                onclick="uploadMusic()"
-                style="background:var(--info);"
-            >
+            <button class="btn-update"
+                    onclick="uploadMusic()"
+                    style="background:var(--info);">
                 CHARGER MUSIQUE MP3
             </button>
+        </div>
 
+        <div class="card">
+            <span class="card-title">📝 Message Défilant</span>
+
+            <input type="text"
+                   id="info_message"
+                   placeholder="Texte 1 | Texte 2 | Texte 3">
+
+            <input type="number"
+                   id="page_duration"
+                   placeholder="Temps par page (secondes)">
+
+            <button class="btn-update"
+                    onclick="updateInfo()">
+                METTRE À JOUR MESSAGE
+            </button>
         </div>
 
     </div>
-
 </div>
 
 <script type="module">
@@ -391,16 +194,10 @@
     } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js";
 
     const firebaseConfig = {
-
         apiKey: "AIzaSyDWob3NIJTPxrdpreSpDr__eaPJA2ZCTl0",
-
-        databaseURL:
-            "https://attraction-info-default-rtdb.europe-west1.firebasedatabase.app",
-
+        databaseURL: "https://attraction-info-default-rtdb.europe-west1.firebasedatabase.app",
         projectId: "attraction-info",
-
-        storageBucket:
-            "attraction-info.firebasestorage.app"
+        storageBucket: "attraction-info.firebasestorage.app"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -455,6 +252,16 @@
                 ? "#e1f5fe"
                 : "#ffebee";
 
+        if(data.info_message)
+            document.getElementById(
+                'info_message'
+            ).value = data.info_message;
+
+        if(data.page_duration)
+            document.getElementById(
+                'page_duration'
+            ).value = data.page_duration;
+
         if(data.intervalle_calcul) {
 
             document.getElementById(
@@ -488,7 +295,68 @@
             ).value = s;
         }
 
+        if(data.horaires_ouverture) {
+
+            document.getElementById(
+                'h_ouv'
+            ).value =
+                data.horaires_ouverture.heure_ouverture || "";
+
+            document.getElementById(
+                'h_ferm'
+            ).value =
+                data.horaires_ouverture.heure_fermeture || "";
+
+            window.selectedDates =
+                data.horaires_ouverture.dates_ouverture || [];
+
+            window.renderDates();
+        }
     });
+
+    window.selectedDates = [];
+
+    window.renderDates = () => {
+
+        document.getElementById(
+            'date_list'
+        ).innerHTML =
+            window.selectedDates.map(
+                d =>
+                `<span class="date-tag"
+                        onclick="window.removeDate('${d}')">
+                    ${d} ✕
+                </span>`
+            ).join('');
+    };
+
+    window.addDate = () => {
+
+        const d =
+            document.getElementById(
+                'date_input'
+            ).value;
+
+        if(
+            d &&
+            !window.selectedDates.includes(d)
+        ) {
+
+            window.selectedDates.push(d);
+
+            window.renderDates();
+        }
+    };
+
+    window.removeDate = (d) => {
+
+        window.selectedDates =
+            window.selectedDates.filter(
+                x => x !== d
+            );
+
+        window.renderDates();
+    };
 
     window.sendCommand = (cmd) => {
 
@@ -516,18 +384,79 @@
         });
     };
 
+    window.setForce = (m) => {
+
+        update(dbRef, {
+
+            mode_auto: (m === 'AUTO'),
+
+            force_open_panel:
+                (m === 'OPEN'),
+
+            force_close_panel:
+                (m === 'CLOSE')
+
+        }).then(() => {
+
+            showSuccess();
+
+            if (m !== 'AUTO') {
+
+                setTimeout(() => {
+
+                    update(dbRef, {
+
+                        force_open_panel: false,
+                        force_close_panel: false
+
+                    });
+
+                }, 1000);
+            }
+        });
+    };
+
+    window.updateInfo = () => {
+
+        update(dbRef, {
+
+            info_message:
+                document.getElementById(
+                    'info_message'
+                ).value,
+
+            page_duration:
+                parseInt(
+                    document.getElementById(
+                        'page_duration'
+                    ).value
+                ) || 8
+
+        }).then(() => {
+
+            showSuccess();
+
+        });
+    };
+
     window.updateParams = () => {
 
         const h = Number(
-            document.getElementById('secu_h').value || 0
+            document.getElementById(
+                'secu_h'
+            ).value || 0
         );
 
         const m = Number(
-            document.getElementById('secu_m').value || 0
+            document.getElementById(
+                'secu_m'
+            ).value || 0
         );
 
         const s = Number(
-            document.getElementById('secu_s').value || 0
+            document.getElementById(
+                'secu_s'
+            ).value || 0
         );
 
         const total_secu =
@@ -538,14 +467,20 @@
         update(dbRef, {
 
             capacite: Number(
-                document.getElementById('capacite').value || 0
+                document.getElementById(
+                    'capacite'
+                ).value || 0
             ),
 
-            intervalle_secu: total_secu,
+            intervalle_secu:
+                total_secu,
 
-            intervalle_calcul: Number(
-                document.getElementById('int_calc').value || 7
-            )
+            intervalle_calcul:
+                Number(
+                    document.getElementById(
+                        'int_calc'
+                    ).value || 7
+                )
 
         }).then(() => {
 
@@ -557,6 +492,119 @@
             showSuccess();
 
         });
+
+    };
+
+    window.updateSchedule = () => {
+
+        update(dbRef, {
+
+            horaires_ouverture: {
+
+                heure_ouverture:
+                    document.getElementById(
+                        'h_ouv'
+                    ).value,
+
+                heure_fermeture:
+                    document.getElementById(
+                        'h_ferm'
+                    ).value,
+
+                dates_ouverture:
+                    window.selectedDates
+            }
+
+        }).then(() => {
+
+            showSuccess();
+
+        });
+    };
+
+    window.cancelUpload = () => {
+
+        if(currentTask)
+            currentTask.cancel();
+
+        document.getElementById(
+            'loading-overlay'
+        ).style.display = 'none';
+    };
+
+    window.uploadMusic = () => {
+
+        const file =
+            document.getElementById(
+                'file_music'
+            ).files[0];
+
+        if(!file)
+            return alert(
+                "Sélectionnez un fichier"
+            );
+
+        document.getElementById(
+            'loading-overlay'
+        ).style.display = 'flex';
+
+        currentTask = uploadBytesResumable(
+            storageRef(
+                storage,
+                'musique_ambiance_drakkar.mp3'
+            ),
+            file
+        );
+
+        currentTask.on(
+            'state_changed',
+
+            (snap) => {
+
+                const p =
+                    (snap.bytesTransferred / snap.totalBytes) * 100;
+
+                document.getElementById(
+                    'progress-bar'
+                ).style.width = p + '%';
+
+                document.getElementById(
+                    'percent-text'
+                ).innerText =
+                    Math.round(p) + '%';
+            },
+
+            (err) => {
+
+                alert(err);
+
+                document.getElementById(
+                    'loading-overlay'
+                ).style.display = 'none';
+            },
+
+            () => {
+
+                getDownloadURL(
+                    currentTask.snapshot.ref
+                ).then((url) => {
+
+                    update(dbRef, {
+
+                        music_url: url
+
+                    }).then(() => {
+
+                        document.getElementById(
+                            'loading-overlay'
+                        ).style.display = 'none';
+
+                        showSuccess();
+
+                    });
+                });
+            }
+        );
     };
 
 </script>
