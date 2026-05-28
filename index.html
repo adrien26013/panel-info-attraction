@@ -164,11 +164,45 @@ if(data.intervalle_secu !== undefined) {
 
     window.updateInfo = () => { update(dbRef, { info_message: document.getElementById('info_message').value, page_duration: parseInt(document.getElementById('page_duration').value) || 8 }).then(() => showSuccess()); };
     window.updateParams = () => {
-        const h = parseInt(document.getElementById('secu_h').value || 0);
-        const m = parseInt(document.getElementById('secu_m').value || 0);
-        const s = parseInt(document.getElementById('secu_s').value || 0);
-        update(dbRef, { capacite: document.getElementById('capacite').value, intervalle_secu: (h * 3600) + (m * 60) + s, intervalle_calcul: parseInt(document.getElementById('int_calc').value || 7) }).then(() => showSuccess());
-    };
+                const h = Number(
+            document.getElementById('secu_h').value || 0
+        );
+
+        const m = Number(
+            document.getElementById('secu_m').value || 0
+        );
+
+        const s = Number(
+            document.getElementById('secu_s').value || 0
+        );
+
+        const total_secu =
+            (h * 3600) +
+            (m * 60) +
+            s;
+
+        update(dbRef, {
+
+            capacite: Number(
+                document.getElementById('capacite').value || 0
+            ),
+
+            intervalle_secu: total_secu,
+
+            intervalle_calcul: Number(
+                document.getElementById('int_calc').value || 7
+            )
+
+        }).then(() => {
+
+            console.log(
+                "[PANEL] intervalle_secu envoyé =",
+                total_secu
+            );
+
+            showSuccess();
+
+        });
     window.updateSchedule = () => {
         update(dbRef, { horaires_ouverture: { heure_ouverture: document.getElementById('h_ouv').value, heure_fermeture: document.getElementById('h_ferm').value, dates_ouverture: window.selectedDates } }).then(() => showSuccess());
     };
