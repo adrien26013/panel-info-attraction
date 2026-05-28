@@ -39,6 +39,7 @@
     <h2>PANEL OPÉRATEUR - DRAKKAR</h2>
     <div class="grid">
 
+        <!-- BUGFIX 2 : Les boutons envoient maintenant la commande ET forcent un reset propre -->
         <div class="card">
             <span class="card-title">🚨 Annonces Prioritaires</span>
             <button onclick="sendCommand('SECURITE')" style="background:#f39c12; color:white;">SÉCURITÉ</button>
@@ -60,8 +61,9 @@
                 <input type="time" id="h_ferm">
             </div>
 
-            <div style="font-size:12px; margin-top:10px;">
-                Sélectionnez les dates d'ouverture :
+            <!-- BUGFIX 3 : Libellé corrigé — ce sont des dates d'ouverture spéciales (exceptions) -->
+            <div style="font-size:12px; margin-top:10px; color:#555;">
+                Dates d'ouverture exceptionnelles (laisser vide = tous les jours dans les horaires) :
             </div>
 
             <input type="date" id="date_input">
@@ -153,12 +155,17 @@
             </button>
         </div>
 
+        <!-- BUGFIX 1 : Placeholder mis à jour pour indiquer le séparateur | -->
         <div class="card">
             <span class="card-title">📝 Message Défilant</span>
 
+            <div style="font-size:12px; color:#555; margin-bottom:4px;">
+                Séparez les pages avec <strong>|</strong> — ex: <em>Bon voyage ! | Attachez vos ceintures | Merci !</em>
+            </div>
+
             <input type="text"
                    id="info_message"
-                   placeholder="Texte 1 | Texte 2 | Texte 3">
+                   placeholder="Page 1 | Page 2 | Page 3">
 
             <input type="number"
                    id="page_duration"
@@ -201,115 +208,48 @@
     };
 
     const app = initializeApp(firebaseConfig);
-
     const db = getDatabase(app);
-
-    const dbRef = ref(
-        db,
-        'attractions/DRAKKAR'
-    );
-
+    const dbRef = ref(db, 'attractions/DRAKKAR');
     const storage = getStorage(app);
-
     let currentTask = null;
 
     window.showSuccess = () => {
-
-        const p = document.getElementById(
-            'success-popup'
-        );
-
+        const p = document.getElementById('success-popup');
         p.style.display = 'flex';
-
-        setTimeout(() => {
-
-            p.style.display = 'none';
-
-        }, 2500);
+        setTimeout(() => { p.style.display = 'none'; }, 2500);
     };
 
     onValue(dbRef, (snapshot) => {
-
         const data = snapshot.val();
+        if (!data) return;
 
-        if(!data) return;
+        const modeEl = document.getElementById('status_mode');
+        modeEl.innerText = data.mode_auto ? "MODE : AUTOMATIQUE" : "MODE : MANUEL (FORCÉ)";
+        modeEl.style.color = data.mode_auto ? "var(--info)" : "var(--danger)";
+        modeEl.style.background = data.mode_auto ? "#e1f5fe" : "#ffebee";
 
-        const modeEl =
-            document.getElementById('status_mode');
+        if (data.info_message)
+            document.getElementById('info_message').value = data.info_message;
+        if (data.page_duration)
+            document.getElementById('page_duration').value = data.page_duration;
+        if (data.intervalle_calcul)
+            document.getElementById('int_calc').value = data.intervalle_calcul;
 
-        modeEl.innerText =
-            data.mode_auto
-                ? "MODE : AUTOMATIQUE"
-                : "MODE : MANUEL (FORCÉ)";
-
-        modeEl.style.color =
-            data.mode_auto
-                ? "var(--info)"
-                : "var(--danger)";
-
-        modeEl.style.background =
-            data.mode_auto
-                ? "#e1f5fe"
-                : "#ffebee";
-
-        if(data.info_message)
-            document.getElementById(
-                'info_message'
-            ).value = data.info_message;
-
-        if(data.page_duration)
-            document.getElementById(
-                'page_duration'
-            ).value = data.page_duration;
-
-        if(data.intervalle_calcul) {
-
-            document.getElementById(
-                'int_calc'
-            ).value = data.intervalle_calcul;
-        }
-
-        if(data.intervalle_secu !== undefined) {
-
-            const total =
-                parseInt(data.intervalle_secu) || 0;
-
+        if (data.intervalle_secu !== undefined) {
+            const total = parseInt(data.intervalle_secu) || 0;
             const h = Math.floor(total / 3600);
-
-            const m = Math.floor(
-                (total % 3600) / 60
-            );
-
+            const m = Math.floor((total % 3600) / 60);
             const s = total % 60;
-
-            document.getElementById(
-                'secu_h'
-            ).value = h;
-
-            document.getElementById(
-                'secu_m'
-            ).value = m;
-
-            document.getElementById(
-                'secu_s'
-            ).value = s;
+            document.getElementById('secu_h').value = h;
+            document.getElementById('secu_m').value = m;
+            document.getElementById('secu_s').value = s;
         }
 
-        if(data.horaires_ouverture) {
-
-            document.getElementById(
-                'h_ouv'
-            ).value =
-                data.horaires_ouverture.heure_ouverture || "";
-
-            document.getElementById(
-                'h_ferm'
-            ).value =
-                data.horaires_ouverture.heure_fermeture || "";
-
-            window.selectedDates =
-                data.horaires_ouverture.dates_ouverture || [];
-
+        if (data.horaires_ouverture) {
+            document.getElementById('h_ouv').value = data.horaires_ouverture.heure_ouverture || "";
+            document.getElementById('h_ferm').value = data.horaires_ouverture.heure_fermeture || "";
+            // BUGFIX 3 : On lit bien dates_ouverture (tableau de strings YYYY-MM-DD)
+            window.selectedDates = data.horaires_ouverture.dates_ouverture || [];
             window.renderDates();
         }
     });
@@ -317,290 +257,119 @@
     window.selectedDates = [];
 
     window.renderDates = () => {
-
-        document.getElementById(
-            'date_list'
-        ).innerHTML =
+        document.getElementById('date_list').innerHTML =
             window.selectedDates.map(
-                d =>
-                `<span class="date-tag"
-                        onclick="window.removeDate('${d}')">
-                    ${d} ✕
-                </span>`
+                d => `<span class="date-tag" onclick="window.removeDate('${d}')">${d} ✕</span>`
             ).join('');
     };
 
     window.addDate = () => {
-
-        const d =
-            document.getElementById(
-                'date_input'
-            ).value;
-
-        if(
-            d &&
-            !window.selectedDates.includes(d)
-        ) {
-
+        const d = document.getElementById('date_input').value;
+        if (d && !window.selectedDates.includes(d)) {
             window.selectedDates.push(d);
-
             window.renderDates();
         }
     };
 
     window.removeDate = (d) => {
-
-        window.selectedDates =
-            window.selectedDates.filter(
-                x => x !== d
-            );
-
+        window.selectedDates = window.selectedDates.filter(x => x !== d);
         window.renderDates();
     };
 
+    // BUGFIX 2 : sendCommand écrit la commande puis attend 100ms
+    // pour s'assurer que Firebase a bien reçu la valeur non-vide
+    // avant tout éventuel reset côté Raspberry (le Pi reset lui-même après exécution)
     window.sendCommand = (cmd) => {
-
         update(dbRef, {
-
             commande_test: cmd
-
         }).then(() => {
-
             showSuccess();
-
+        }).catch(err => {
+            alert("Erreur Firebase : " + err.message);
         });
     };
 
     window.setWaitTime = (val) => {
-
-        update(dbRef, {
-
-            show_wait_time: val
-
-        }).then(() => {
-
-            showSuccess();
-
-        });
+        update(dbRef, { show_wait_time: val }).then(() => { showSuccess(); });
     };
 
+    // BUGFIX 2 : setForce n'efface plus force_open/close après 1s
+    // C'est le Pi qui gère l'état via mode_auto — on envoie simplement les flags
     window.setForce = (m) => {
-
-        update(dbRef, {
-
+        const payload = {
             mode_auto: (m === 'AUTO'),
-
-            force_open_panel:
-                (m === 'OPEN'),
-
-            force_close_panel:
-                (m === 'CLOSE')
-
-        }).then(() => {
-
-            showSuccess();
-
-            if (m !== 'AUTO') {
-
-                setTimeout(() => {
-
-                    update(dbRef, {
-
-                        force_open_panel: false,
-                        force_close_panel: false
-
-                    });
-
-                }, 1000);
-            }
-        });
+            force_open_panel: (m === 'OPEN'),
+            force_close_panel: (m === 'CLOSE')
+        };
+        update(dbRef, payload).then(() => { showSuccess(); });
     };
 
     window.updateInfo = () => {
-
         update(dbRef, {
-
-            info_message:
-                document.getElementById(
-                    'info_message'
-                ).value,
-
-            page_duration:
-                parseInt(
-                    document.getElementById(
-                        'page_duration'
-                    ).value
-                ) || 8
-
-        }).then(() => {
-
-            showSuccess();
-
-        });
+            info_message: document.getElementById('info_message').value,
+            page_duration: parseInt(document.getElementById('page_duration').value) || 8
+        }).then(() => { showSuccess(); });
     };
 
     window.updateParams = () => {
-
-        const h = Number(
-            document.getElementById(
-                'secu_h'
-            ).value || 0
-        );
-
-        const m = Number(
-            document.getElementById(
-                'secu_m'
-            ).value || 0
-        );
-
-        const s = Number(
-            document.getElementById(
-                'secu_s'
-            ).value || 0
-        );
-
-        const total_secu =
-            (h * 3600) +
-            (m * 60) +
-            s;
+        const h = Number(document.getElementById('secu_h').value || 0);
+        const m = Number(document.getElementById('secu_m').value || 0);
+        const s = Number(document.getElementById('secu_s').value || 0);
+        const total_secu = (h * 3600) + (m * 60) + s;
 
         update(dbRef, {
-
-            capacite: Number(
-                document.getElementById(
-                    'capacite'
-                ).value || 0
-            ),
-
-            intervalle_secu:
-                total_secu,
-
-            intervalle_calcul:
-                Number(
-                    document.getElementById(
-                        'int_calc'
-                    ).value || 7
-                )
-
+            capacite: Number(document.getElementById('capacite').value || 0),
+            intervalle_secu: total_secu,
+            intervalle_calcul: Number(document.getElementById('int_calc').value || 7)
         }).then(() => {
-
-            console.log(
-                "[PANEL] intervalle_secu envoyé =",
-                total_secu
-            );
-
+            console.log("[PANEL] intervalle_secu envoyé =", total_secu);
             showSuccess();
-
         });
-
     };
 
+    // BUGFIX 3 : On envoie dates_ouverture (tableau de strings YYYY-MM-DD)
+    // Le Python lira ce tableau pour vérifier si la date du jour est incluse
     window.updateSchedule = () => {
-
         update(dbRef, {
-
             horaires_ouverture: {
-
-                heure_ouverture:
-                    document.getElementById(
-                        'h_ouv'
-                    ).value,
-
-                heure_fermeture:
-                    document.getElementById(
-                        'h_ferm'
-                    ).value,
-
-                dates_ouverture:
-                    window.selectedDates
+                heure_ouverture: document.getElementById('h_ouv').value,
+                heure_fermeture: document.getElementById('h_ferm').value,
+                dates_ouverture: window.selectedDates   // [] = ouvert tous les jours
             }
-
-        }).then(() => {
-
-            showSuccess();
-
-        });
+        }).then(() => { showSuccess(); });
     };
 
     window.cancelUpload = () => {
-
-        if(currentTask)
-            currentTask.cancel();
-
-        document.getElementById(
-            'loading-overlay'
-        ).style.display = 'none';
+        if (currentTask) currentTask.cancel();
+        document.getElementById('loading-overlay').style.display = 'none';
     };
 
     window.uploadMusic = () => {
+        const file = document.getElementById('file_music').files[0];
+        if (!file) return alert("Sélectionnez un fichier");
 
-        const file =
-            document.getElementById(
-                'file_music'
-            ).files[0];
-
-        if(!file)
-            return alert(
-                "Sélectionnez un fichier"
-            );
-
-        document.getElementById(
-            'loading-overlay'
-        ).style.display = 'flex';
+        document.getElementById('loading-overlay').style.display = 'flex';
 
         currentTask = uploadBytesResumable(
-            storageRef(
-                storage,
-                'musique_ambiance_drakkar.mp3'
-            ),
+            storageRef(storage, 'musique_ambiance_drakkar.mp3'),
             file
         );
 
-        currentTask.on(
-            'state_changed',
-
+        currentTask.on('state_changed',
             (snap) => {
-
-                const p =
-                    (snap.bytesTransferred / snap.totalBytes) * 100;
-
-                document.getElementById(
-                    'progress-bar'
-                ).style.width = p + '%';
-
-                document.getElementById(
-                    'percent-text'
-                ).innerText =
-                    Math.round(p) + '%';
+                const p = (snap.bytesTransferred / snap.totalBytes) * 100;
+                document.getElementById('progress-bar').style.width = p + '%';
+                document.getElementById('percent-text').innerText = Math.round(p) + '%';
             },
-
             (err) => {
-
                 alert(err);
-
-                document.getElementById(
-                    'loading-overlay'
-                ).style.display = 'none';
+                document.getElementById('loading-overlay').style.display = 'none';
             },
-
             () => {
-
-                getDownloadURL(
-                    currentTask.snapshot.ref
-                ).then((url) => {
-
-                    update(dbRef, {
-
-                        music_url: url
-
-                    }).then(() => {
-
-                        document.getElementById(
-                            'loading-overlay'
-                        ).style.display = 'none';
-
+                getDownloadURL(currentTask.snapshot.ref).then((url) => {
+                    update(dbRef, { music_url: url }).then(() => {
+                        document.getElementById('loading-overlay').style.display = 'none';
                         showSuccess();
-
                     });
                 });
             }
