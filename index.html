@@ -71,11 +71,8 @@
                 <button onclick="setWaitTime(true)" style="background:var(--success); color:white;">Attente: OUI</button>
                 <button onclick="setWaitTime(false)" style="background:var(--danger); color:white;">Attente: NON</button>
             </div>
-            <div style="font-size:12px; margin-top:10px;">Capacité (Personne / heure) :</div>
             <input type="number" id="capacite" placeholder="Capacité">
-            <div style="font-size:12px; margin-top:10px;">Calcul / affichage attente (S) :</div>
             <input type="number" id="int_calc" placeholder="Intervalle calcul (s)">
-            <div style="font-size:12px; margin-top:10px;">Diffusion sécurité (H/M/S) :</div>
             <div style="display:flex; gap:5px;">
                 <input type="number" id="secu_h" placeholder="H">
                 <input type="number" id="secu_m" placeholder="M">
@@ -91,7 +88,6 @@
             <span class="card-title">📝 Message Défilant</span>
             <input type="text" id="info_message" placeholder="Texte 1 | Texte 2 | Texte 3">
             <input type="number" id="page_duration" placeholder="Temps par page (secondes)">
-            <div style="font-size:12px; margin-top:10px;">Pour changer les textes par page, Utilisez le symbole "|" à chaque fin de texte. Exemple : Bienvenue au Drakkar ! | Horaires des spectacles...</div>
             <button class="btn-update" onclick="updateInfo()">METTRE À JOUR MESSAGE</button>
         </div>
     </div>
@@ -114,12 +110,10 @@
     onValue(dbRef, (snapshot) => {
         const data = snapshot.val();
         if(!data) return;
-        
         const modeEl = document.getElementById('status_mode');
         modeEl.innerText = data.mode_auto ? "MODE : AUTOMATIQUE" : "MODE : MANUEL (FORCÉ)";
         modeEl.style.color = data.mode_auto ? "var(--info)" : "var(--danger)";
         modeEl.style.background = data.mode_auto ? "#e1f5fe" : "#ffebee";
-
         if(data.info_message) document.getElementById('info_message').value = data.info_message;
         if(data.page_duration) document.getElementById('page_duration').value = data.page_duration;
         if(data.intervalle_calcul) document.getElementById('int_calc').value = data.intervalle_calcul;
@@ -137,44 +131,34 @@
     window.removeDate = (d) => { window.selectedDates = window.selectedDates.filter(x => x !== d); window.renderDates(); };
     window.sendCommand = (cmd) => update(dbRef, { commande_test: cmd }).then(() => showSuccess());
     window.setWaitTime = (val) => update(dbRef, { show_wait_time: val }).then(() => showSuccess());
-    
-    // CORRIGÉ ICI : Réinitialisation propre des flags de forçage
+
+    // CORRIGÉ ICI
     window.setForce = (m) => {
-        const payload = { 
+        update(dbRef, { 
             mode_auto: (m === 'AUTO'),
-            force_open_panel: false,
-            force_close_panel: false 
-        };
-        if (m === 'OPEN') { payload.force_open_panel = true; }
-        if (m === 'CLOSE') { payload.force_close_panel = true; }
-        update(dbRef, payload).then(() => showSuccess());
+            force_open_panel: (m === 'OPEN'),
+            force_close_panel: (m === 'CLOSE')
+        }).then(() => {
+            showSuccess();
+            if (m !== 'AUTO') {
+                setTimeout(() => {
+                    update(dbRef, { force_open_panel: false, force_close_panel: false });
+                }, 1000);
+            }
+        });
     };
 
     window.updateInfo = () => { update(dbRef, { info_message: document.getElementById('info_message').value, page_duration: parseInt(document.getElementById('page_duration').value) || 8 }).then(() => showSuccess()); };
-    
     window.updateParams = () => {
         const h = parseInt(document.getElementById('secu_h').value || 0);
         const m = parseInt(document.getElementById('secu_m').value || 0);
         const s = parseInt(document.getElementById('secu_s').value || 0);
-        update(dbRef, { 
-            capacite: document.getElementById('capacite').value,
-            intervalle_secu: (h * 3600) + (m * 60) + s,
-            intervalle_calcul: parseInt(document.getElementById('int_calc').value || 7)
-        }).then(() => showSuccess());
+        update(dbRef, { capacite: document.getElementById('capacite').value, intervalle_secu: (h * 3600) + (m * 60) + s, intervalle_calcul: parseInt(document.getElementById('int_calc').value || 7) }).then(() => showSuccess());
     };
-
     window.updateSchedule = () => {
-        update(dbRef, {
-            horaires_ouverture: {
-                heure_ouverture: document.getElementById('h_ouv').value,
-                heure_fermeture: document.getElementById('h_ferm').value,
-                dates_ouverture: window.selectedDates
-            }
-        }).then(() => showSuccess());
+        update(dbRef, { horaires_ouverture: { heure_ouverture: document.getElementById('h_ouv').value, heure_fermeture: document.getElementById('h_ferm').value, dates_ouverture: window.selectedDates } }).then(() => showSuccess());
     };
-
     window.cancelUpload = () => { if(currentTask) currentTask.cancel(); document.getElementById('loading-overlay').style.display = 'none'; };
-
     window.uploadMusic = () => {
         const file = document.getElementById('file_music').files[0];
         if(!file) return alert("Sélectionnez un fichier");
