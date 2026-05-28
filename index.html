@@ -48,7 +48,7 @@
 
         <div class="card">
             <span class="card-title">📅 Planning & Forçage</span>
-            <div id="status_mode" style="margin-top:10px; font-weight:bold; color:var(--info);">MODE : AUTO</div>
+            <div id="status_mode" style="padding:10px; margin-bottom:10px; text-align:center; border-radius:5px; font-weight:bold; background:#eee;">MODE : CHARGEMENT...</div>
             <div style="display:flex; gap:5px;">
                 <input type="time" id="h_ouv">
                 <input type="time" id="h_ferm">
@@ -114,6 +114,13 @@
     onValue(dbRef, (snapshot) => {
         const data = snapshot.val();
         if(!data) return;
+        
+        // MODIF : Affichage du mode
+        const modeEl = document.getElementById('status_mode');
+        modeEl.innerText = data.mode_auto ? "MODE : AUTOMATIQUE" : "MODE : MANUEL (FORCÉ)";
+        modeEl.style.color = data.mode_auto ? "var(--info)" : "var(--danger)";
+        modeEl.style.background = data.mode_auto ? "#e1f5fe" : "#ffebee";
+
         if(data.info_message) document.getElementById('info_message').value = data.info_message;
         if(data.page_duration) document.getElementById('page_duration').value = data.page_duration;
         if(data.intervalle_calcul) document.getElementById('int_calc').value = data.intervalle_calcul;
@@ -131,7 +138,15 @@
     window.removeDate = (d) => { window.selectedDates = window.selectedDates.filter(x => x !== d); window.renderDates(); };
     window.sendCommand = (cmd) => update(dbRef, { commande_test: cmd }).then(() => showSuccess());
     window.setWaitTime = (val) => update(dbRef, { show_wait_time: val }).then(() => showSuccess());
-    window.setForce = (m) => update(dbRef, { force_open_panel: m==='OPEN', force_close_panel: m==='CLOSE', mode_auto: m==='AUTO' }).then(() => showSuccess());
+    
+    // MODIF : Gestion du forçage avec mode_auto
+    window.setForce = (m) => {
+        const payload = { mode_auto: (m === 'AUTO') };
+        if (m === 'OPEN') { payload.force_open_panel = true; payload.force_close_panel = false; }
+        if (m === 'CLOSE') { payload.force_open_panel = false; payload.force_close_panel = true; }
+        update(dbRef, payload).then(() => showSuccess());
+    };
+
     window.updateInfo = () => { update(dbRef, { info_message: document.getElementById('info_message').value, page_duration: parseInt(document.getElementById('page_duration').value) || 8 }).then(() => showSuccess()); };
     
     window.updateParams = () => {
@@ -146,26 +161,14 @@
     };
 
     window.updateSchedule = () => {
-    // On force la valeur des inputs avant l'envoi
-    const payload = {
-        horaires_ouverture: {
-            heure_ouverture: document.getElementById('h_ouv').value,
-            heure_fermeture: document.getElementById('h_ferm').value,
-            dates_ouverture: window.selectedDates
-        }
+        update(dbRef, {
+            horaires_ouverture: {
+                heure_ouverture: document.getElementById('h_ouv').value,
+                heure_fermeture: document.getElementById('h_ferm').value,
+                dates_ouverture: window.selectedDates
+            }
+        }).then(() => showSuccess());
     };
-    
-    // Utiliser update directement sur la référence dbRef
-    update(dbRef, payload)
-        .then(() => {
-            console.log("Planning mis à jour avec succès");
-            showSuccess();
-        })
-        .catch((error) => {
-            console.error("Erreur de mise à jour : ", error);
-            alert("Erreur lors de la validation. Vérifiez votre connexion.");
-        });
-};
 
     window.cancelUpload = () => { if(currentTask) currentTask.cancel(); document.getElementById('loading-overlay').style.display = 'none'; };
 
