@@ -116,7 +116,21 @@
         modeEl.style.background = data.mode_auto ? "#e1f5fe" : "#ffebee";
         if(data.info_message) document.getElementById('info_message').value = data.info_message;
         if(data.page_duration) document.getElementById('page_duration').value = data.page_duration;
-        if(data.intervalle_calcul) document.getElementById('int_calc').value = data.intervalle_calcul;
+        if(data.intervalle_calcul) {
+    document.getElementById('int_calc').value = data.intervalle_calcul;
+}
+
+if(data.intervalle_secu !== undefined) {
+    const total = parseInt(data.intervalle_secu) || 0;
+
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+
+    document.getElementById('secu_h').value = h;
+    document.getElementById('secu_m').value = m;
+    document.getElementById('secu_s').value = s;
+}
         if(data.horaires_ouverture) {
             document.getElementById('h_ouv').value = data.horaires_ouverture.heure_ouverture || "";
             document.getElementById('h_ferm').value = data.horaires_ouverture.heure_fermeture || "";
