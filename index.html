@@ -383,14 +383,16 @@
     // BUGFIX 2 : setForce n'efface plus force_open/close après 1s
     // C'est le Pi qui gère l'état via mode_auto — on envoie simplement les flags
     window.setForce = (m) => {
-        piSend(
-            { action: 'force', mode: m },
-            () => update(dbRef, {
-                mode_auto: (m === 'AUTO'),
-                force_open_panel: (m === 'OPEN'),
-                force_close_panel: (m === 'CLOSE')
-            }).then(() => showSuccess())
-        );
+        // Toujours écrire dans Firebase pour que onValue mette à jour le statut affiché
+        const fbPayload = {
+            mode_auto: (m === 'AUTO'),
+            force_open_panel: (m === 'OPEN'),
+            force_close_panel: (m === 'CLOSE')
+        };
+        update(dbRef, fbPayload);
+        // Et envoyer aussi au Pi directement
+        piSend({ action: 'force', mode: m }, () => showSuccess());
+        showSuccess();
     };
 
     window.updateInfo = () => {
