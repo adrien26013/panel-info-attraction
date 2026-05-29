@@ -598,11 +598,12 @@
 
             renderPlaylist(s.playlist, s.current_index);
         })
-        .catch(() => {});
+        .catch(() => {}); // erreur silencieuse (tunnel indispo ou CORS)
     };
 
-    setInterval(fetchPlayerState, 1000);
-    setTimeout(fetchPlayerState, 500);
+    // Polling toutes les 2s pour réduire les erreurs CORS dans la console
+    setInterval(fetchPlayerState, 2000);
+    setTimeout(fetchPlayerState, 1000);
 
     // Upload multiple vers Firebase Storage puis téléchargement sur le Pi
     window.uploadMusic = () => {
