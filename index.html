@@ -521,7 +521,7 @@
         return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
     };
 
-    const piCmd = (action, extra = {}) => piSend({ action, ...extra }, null);
+    window.piCmd = (action, extra = {}) => piSend({ action, ...extra }, null);
 
     const seekTo = (event) => {
         const bar  = document.getElementById('seek-bar');
@@ -529,29 +529,26 @@
         const pct  = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
         const pos  = pct * (_trackDuration || 300);
         _localPos = pos;
-        _localPollTime = Date.now() / 1000;
+        _localPollTime = Date.now();
         piSend({ action: 'music_seek', position: pos }, null);
         const audio = document.getElementById('local-audio');
         if (audio.src && audio.duration) audio.currentTime = pct * audio.duration;
     };
 
     // Charger les URLs Firebase Storage des pistes existantes
-    const loadStorageUrls = async () => {
-        try {
-            const { ref: sRef, listAll, getDownloadURL: gdu } = await import('https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js');
-            const listRef = sRef(window._storage, 'playlist/');
-            const res = await listAll(listRef);
-            for (const item of res.items) {
-                const url  = await gdu(item);
-                const name = item.name.replace(/\.mp3$/i, '');
-                _playlistUrls[name] = url;
-            }
-            console.log(`[PANEL] ${Object.keys(_playlistUrls).length} URL(s) chargées`);
-        } catch(e) {
-            console.warn('[PANEL] Erreur chargement URLs Storage:', e);
-        }
-    };
-    loadStorageUrls();
+    // Charger les URLs Firebase Storage des pistes existantes
+    import('https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js').then(function(mod) {
+        mod.listAll(storageRef(window._storage, 'playlist/')).then(function(res) {
+            return Promise.all(res.items.map(function(item) {
+                return getDownloadURL(item).then(function(url) {
+                    _playlistUrls[item.name.replace('.mp3', '')] = url;
+                });
+            }));
+        }).then(function() {
+            console.log('[PANEL] ' + Object.keys(_playlistUrls).length + ' URL(s) Storage chargees');
+            fetchPlayerState();
+        }).catch(function(e) { console.warn('[PANEL] Storage:', e); });
+    });
 
     const renderPlaylist = (playlist, currentIndex) => {
         const container = document.getElementById('playlist-container');
@@ -589,7 +586,7 @@
     // Mise à jour de la timeline locale toutes les 250ms (fluide, sans attendre le poll)
     setInterval(() => {
         if (!_localPlaying) return;
-        const elapsed = (Date.now() / 1000) - _localPollTime;
+        const elapsed = (Date.now() - _localPollTime) / 1000;
         const pos = Math.min(_localPos + elapsed, _trackDuration || 9999);
         document.getElementById('player-pos').innerText = fmtTime(pos);
         if (_trackDuration > 0) {
@@ -611,7 +608,7 @@
             if (s.duration > 0) _trackDuration = s.duration;
             _localPlaying  = s.is_playing && !s.is_paused;
             _localPos      = s.position || 0;
-            _localPollTime = Date.now() / 1000;
+            _localPollTime = Date.now();
 
             // Changer audio local si piste changée
             if (s.current_index !== _lastIndex) {
