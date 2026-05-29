@@ -509,30 +509,49 @@
 
 
     // ── Lecteur audio ────────────────────────────────────────────────────────
-    let _trackDuration = 0;
-    let _playlistUrls  = {};   // nom → URL Firebase Storage pour écoute locale
-    let _lastIndex     = -1;
+    let _trackDuration  = 0;
+    let _playlistUrls   = {};   // nom → URL Firebase Storage
+    let _lastIndex      = -1;
+    let _localPos       = 0;    // position interpolée localement
+    let _localPlaying   = false;
+    let _localPollTime  = 0;    // timestamp du dernier poll réussi
 
     const fmtTime = (s) => {
         s = Math.max(0, Math.floor(s || 0));
         return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
     };
 
-    // Commande vers le Pi (contrôle la lecture sur le Pi)
-    const piCmd = (action, extra = {}) => {
-        piSend({ action, ...extra }, null);
-    };
+    const piCmd = (action, extra = {}) => piSend({ action, ...extra }, null);
 
     const seekTo = (event) => {
         const bar  = document.getElementById('seek-bar');
         const rect = bar.getBoundingClientRect();
         const pct  = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
         const pos  = pct * (_trackDuration || 300);
+        _localPos = pos;
+        _localPollTime = Date.now() / 1000;
         piSend({ action: 'music_seek', position: pos }, null);
-        // Aussi seek l'audio local si en lecture
         const audio = document.getElementById('local-audio');
         if (audio.src && audio.duration) audio.currentTime = pct * audio.duration;
     };
+
+    // Charger les URLs Firebase Storage des pistes existantes
+    const loadStorageUrls = async () => {
+        try {
+            const { ref: sRef, listAll, getDownloadURL: gdu } = await import('https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js');
+            const listRef = sRef(window._storage, 'playlist/');
+            const res = await listAll(listRef);
+            for (const item of res.items) {
+                const url  = await gdu(item);
+                const name = item.name.replace(/\.mp3$/i, '');
+                _playlistUrls[name] = url;
+            }
+            console.log(`[PANEL] ${Object.keys(_playlistUrls).length} URL(s) chargées`);
+        } catch(e) {
+            console.warn('[PANEL] Erreur chargement URLs Storage:', e);
+        }
+    };
+    loadStorageUrls();
 
     const renderPlaylist = (playlist, currentIndex) => {
         const container = document.getElementById('playlist-container');
@@ -552,9 +571,7 @@
     };
 
     const selectTrack = (index, name) => {
-        // Lance sur le Pi
         piSend({ action: 'music_play', index }, null);
-        // Lance en écoute locale si l'URL est disponible
         const audio = document.getElementById('local-audio');
         if (_playlistUrls[name]) {
             audio.src = _playlistUrls[name];
@@ -563,75 +580,82 @@
     };
 
     window.deleteTrack = (index) => {
-        if (confirm('Supprimer cette piste de la playlist ?')) {
+        if (confirm('Supprimer cette piste ?')) {
             piSend({ action: 'music_delete', index }, null);
-            setTimeout(fetchPlayerState, 800);
+            setTimeout(fetchPlayerState, 1000);
         }
     };
 
+    // Mise à jour de la timeline locale toutes les 250ms (fluide, sans attendre le poll)
+    setInterval(() => {
+        if (!_localPlaying) return;
+        const elapsed = (Date.now() / 1000) - _localPollTime;
+        const pos = Math.min(_localPos + elapsed, _trackDuration || 9999);
+        document.getElementById('player-pos').innerText = fmtTime(pos);
+        if (_trackDuration > 0) {
+            document.getElementById('player-progress').style.width =
+                Math.min(100, (pos / _trackDuration) * 100) + '%';
+        }
+    }, 250);
+
+    // Poll état Pi toutes les 3s (juste pour sync piste/index/durée)
     const fetchPlayerState = () => {
         if (!PI_CMD_URL) return;
-        fetch(`${PI_CMD_URL}/music_state`, { signal: AbortSignal.timeout(2000) })
+        fetch(`${PI_CMD_URL}/music_state`, { signal: AbortSignal.timeout(3000) })
         .then(r => r.json())
         .then(s => {
             document.getElementById('player-track').innerText = s.current_name || 'Aucune piste';
             document.getElementById('btn-playpause').innerText = (s.is_playing && !s.is_paused) ? '⏸' : '▶';
+            document.getElementById('player-dur').innerText = s.duration > 0 ? fmtTime(s.duration) : '--:--';
 
-            const pos = s.position || 0;
-            const dur = s.duration || 0;
-            if (dur > 0) _trackDuration = dur;
+            if (s.duration > 0) _trackDuration = s.duration;
+            _localPlaying  = s.is_playing && !s.is_paused;
+            _localPos      = s.position || 0;
+            _localPollTime = Date.now() / 1000;
 
-            document.getElementById('player-pos').innerText = fmtTime(pos);
-            document.getElementById('player-dur').innerText = _trackDuration > 0 ? fmtTime(_trackDuration) : '--:--';
-            if (_trackDuration > 0) {
-                document.getElementById('player-progress').style.width = Math.min(100, (pos / _trackDuration) * 100) + '%';
-            }
-
-            // Changer l'audio local si la piste a changé
+            // Changer audio local si piste changée
             if (s.current_index !== _lastIndex) {
                 _lastIndex = s.current_index;
+                _trackDuration = s.duration || 0;
                 const audio = document.getElementById('local-audio');
                 const url   = _playlistUrls[s.current_name];
-                if (url && audio.src !== url) audio.src = url;
-                _trackDuration = 0;
+                if (url) { audio.src = url; }
             }
 
             renderPlaylist(s.playlist, s.current_index);
         })
-        .catch(() => {}); // erreur silencieuse (tunnel indispo ou CORS)
+        .catch(() => {});
     };
 
-    // Polling toutes les 2s pour réduire les erreurs CORS dans la console
-    setInterval(fetchPlayerState, 2000);
-    setTimeout(fetchPlayerState, 1000);
+    setInterval(fetchPlayerState, 3000);
+    setTimeout(fetchPlayerState, 500);
 
-    // Upload multiple vers Firebase Storage puis téléchargement sur le Pi
     window.uploadMusic = () => {
         const files = document.getElementById('file_music').files;
         if (!files || files.length === 0) return alert('Sélectionnez un ou plusieurs fichiers MP3');
-
         const prog = document.getElementById('upload-progress');
         prog.style.display = 'block';
         let done = 0;
 
         Array.from(files).forEach(file => {
             prog.innerText = `Upload ${file.name}...`;
-            const sRef = storageRef(window._storage, `playlist/${file.name}`);
-            const task = uploadBytesResumable(sRef, file);
+            const sRef2 = storageRef(window._storage, `playlist/${file.name}`);
+            const task  = uploadBytesResumable(sRef2, file);
             task.on('state_changed',
                 (snap) => {
                     const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
                     prog.innerText = `${file.name} : ${pct}%`;
                 },
-                (err) => { alert(`Erreur : ${err}`); prog.style.display='none'; },
+                (err) => { alert(`Erreur : ${err}`); prog.style.display = 'none'; },
                 () => {
                     getDownloadURL(task.snapshot.ref).then(url => {
-                        _playlistUrls[file.name.replace('.mp3','')] = url;
+                        const name = file.name.replace(/\.mp3$/i, '');
+                        _playlistUrls[name] = url;
                         piSend({ action: 'music_download', url, filename: file.name }, null);
                         done++;
                         if (done === files.length) {
                             prog.innerText = `${done} fichier(s) ajouté(s) ✓`;
-                            setTimeout(() => { prog.style.display='none'; }, 3000);
+                            setTimeout(() => { prog.style.display = 'none'; }, 3000);
                             showSuccess();
                             setTimeout(() => {
                                 piSend({ action: 'music_reload' }, null);
