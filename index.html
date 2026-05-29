@@ -286,15 +286,18 @@
     // pour s'assurer que Firebase a bien reçu la valeur non-vide
     // avant tout éventuel reset côté Raspberry (le Pi reset lui-même après exécution)
     window.sendCommand = (cmd) => {
+        console.log(`[PANEL] sendCommand appelé : ${cmd}`);
         update(dbRef, { commande_test: cmd })
         .then(() => {
+            console.log(`[PANEL] Firebase écrit commande_test = ${cmd} ✓`);
             showSuccess();
-            // Remet commande_test à "" après 3s — laisse le temps au Pi de lire et exécuter
             setTimeout(() => {
+                console.log(`[PANEL] Reset commande_test = ""`);
                 update(dbRef, { commande_test: "" });
             }, 3000);
         })
         .catch(err => {
+            console.error(`[PANEL] ERREUR Firebase : ${err.message}`);
             alert("Erreur Firebase : " + err.message);
         });
     };
