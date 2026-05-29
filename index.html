@@ -20,6 +20,13 @@
         #progress-container { width: 80%; max-width: 400px; background: #333; border-radius: 10px; overflow: hidden; margin-top: 20px; }
         #progress-bar { width: 0%; height: 20px; background: #17a2b8; transition: width 0.3s; }
         #success-popup { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); color:white; flex-direction:column; justify-content:center; align-items:center; z-index:2000; }
+        .playlist-item { display:flex; align-items:center; padding:8px 10px; border-bottom:1px solid #f0f3f8; cursor:pointer; transition:background 0.15s; }
+        .playlist-item:hover { background:#f0f3f8; }
+        .playlist-item.active { background:#e1f5fe; font-weight:bold; color:#005096; }
+        .playlist-item .track-name { flex:1; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .playlist-item .track-del { color:#dc3545; font-size:16px; padding:0 4px; cursor:pointer; flex-shrink:0; }
+        input[type=range] { -webkit-appearance:none; height:4px; background:#e2e8f0; border-radius:2px; outline:none; border:none; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:#005096; cursor:pointer; }
         #annonce-banner { display:none; background:#e65c00; color:white; padding:12px 16px; font-weight:bold; font-size:15px; border-radius:8px; margin-bottom:16px; }
         #annonce-banner .banner-title { text-align:center; margin-bottom:8px; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
@@ -127,28 +134,21 @@
                 </button>
             </div>
 
+            <div style="font-size:12px; color:#555; margin-top:8px;">Capacité horaire (personnes/h)</div>
             <input type="number"
                    id="capacite"
-                   placeholder="Capacité">
+                   placeholder="Ex: 800">
 
+            <div style="font-size:12px; color:#555; margin-top:8px;">Intervalle de calcul de l'attente (secondes)</div>
             <input type="number"
                    id="int_calc"
-                   placeholder="Intervalle calcul (s)">
+                   placeholder="Ex: 10">
 
+            <div style="font-size:12px; color:#555; margin-top:8px;">Intervalle entre annonces sécurité (hh:mm:ss)</div>
             <div style="display:flex; gap:5px;">
-
-                <input type="number"
-                       id="secu_h"
-                       placeholder="H">
-
-                <input type="number"
-                       id="secu_m"
-                       placeholder="M">
-
-                <input type="number"
-                       id="secu_s"
-                       placeholder="S">
-
+                <input type="number" id="secu_h" placeholder="Heures">
+                <input type="number" id="secu_m" placeholder="Minutes">
+                <input type="number" id="secu_s" placeholder="Secondes">
             </div>
 
             <button class="btn-update"
@@ -158,6 +158,7 @@
 
             <hr style="margin:15px 0;">
 
+            <div style="font-size:12px; color:#555; margin-bottom:4px;">Musique d'ambiance (fichier MP3)</div>
             <input type="file"
                    id="file_music"
                    accept="audio/mp3">
@@ -166,6 +167,49 @@
                     onclick="uploadMusic()"
                     style="background:var(--info);">
                 CHARGER MUSIQUE MP3
+            </button>
+        </div>
+
+        <div class="card">
+            <span class="card-title">🎵 Lecteur & Playlist</span>
+
+            <!-- Piste en cours -->
+            <div id="player-track" style="font-weight:bold; text-align:center; margin-bottom:8px; font-size:14px; color:#005096; min-height:20px;">Chargement...</div>
+
+            <!-- Timeline -->
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                <span id="player-pos" style="font-size:12px; min-width:35px;">0:00</span>
+                <div style="flex:1; height:6px; background:#e2e8f0; border-radius:3px; cursor:pointer; position:relative;" id="seek-bar" onclick="seekTo(event)">
+                    <div id="player-progress" style="height:100%; background:#005096; border-radius:3px; width:0%; transition:width 0.5s linear;"></div>
+                </div>
+                <span id="player-dur" style="font-size:12px; min-width:35px; text-align:right;">0:00</span>
+            </div>
+
+            <!-- Contrôles -->
+            <div style="display:flex; justify-content:center; align-items:center; gap:12px; margin-bottom:12px;">
+                <button onclick="musicCmd('music_prev')" style="width:44px; height:44px; border-radius:50%; background:#f0f3f8; border:1px solid #ccc; font-size:18px; display:flex; align-items:center; justify-content:center; cursor:pointer;">⏮</button>
+                <button id="btn-playpause" onclick="musicCmd('music_pause')" style="width:56px; height:56px; border-radius:50%; background:#005096; color:white; border:none; font-size:22px; cursor:pointer;">▶</button>
+                <button onclick="musicCmd('music_next')" style="width:44px; height:44px; border-radius:50%; background:#f0f3f8; border:1px solid #ccc; font-size:18px; display:flex; align-items:center; justify-content:center; cursor:pointer;">⏭</button>
+            </div>
+
+            <!-- Volume -->
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+                <span style="font-size:14px;">🔈</span>
+                <input type="range" id="volume-slider" min="0" max="100" value="80"
+                       oninput="setVolume(this.value)"
+                       style="flex:1; height:4px; cursor:pointer; margin-top:0;">
+                <span style="font-size:14px;">🔊</span>
+            </div>
+
+            <!-- Playlist -->
+            <div style="font-size:12px; color:#555; margin-bottom:6px; font-weight:bold;">PLAYLIST</div>
+            <div id="playlist-container" style="max-height:200px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px; margin-bottom:10px;"></div>
+
+            <!-- Upload -->
+            <div style="font-size:12px; color:#555; margin-bottom:4px;">Ajouter un MP3 à la playlist</div>
+            <input type="file" id="file_music" accept="audio/mp3" multiple>
+            <button class="btn-update" onclick="uploadMusic()" style="background:var(--info);">
+                AJOUTER À LA PLAYLIST
             </button>
         </div>
 
@@ -225,6 +269,7 @@
     const db = getDatabase(app);
     const dbRef = ref(db, 'attractions/DRAKKAR');
     const storage = getStorage(app);
+    window._storage = storage;
     let currentTask = null;
 
     // URL du tunnel lue depuis Firebase — mise à jour automatiquement par le Pi au démarrage
@@ -467,6 +512,120 @@
                 });
             }
         );
+    };
+
+
+    // ── Lecteur audio ────────────────────────────────────────────────────────
+    let _playerInterval = null;
+    let _trackDuration  = 0;  // durée estimée (inconnue sans metadata)
+
+    const fmtTime = (s) => {
+        s = Math.max(0, Math.floor(s));
+        return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+    };
+
+    const musicCmd = (action, extra = {}) => {
+        piSend({ action, ...extra }, null);
+    };
+
+    const setVolume = (val) => {
+        piSend({ action: 'music_volume', volume: val / 100 }, null);
+    };
+
+    const seekTo = (event) => {
+        const bar = document.getElementById('seek-bar');
+        const rect = bar.getBoundingClientRect();
+        const pct  = (event.clientX - rect.left) / rect.width;
+        const pos  = Math.max(0, pct * (_trackDuration || 300));
+        piSend({ action: 'music_seek', position: pos }, null);
+    };
+
+    const renderPlaylist = (playlist, currentIndex) => {
+        const container = document.getElementById('playlist-container');
+        if (!playlist || playlist.length === 0) {
+            container.innerHTML = '<div style="padding:12px; color:#999; text-align:center; font-size:13px;">Aucune piste — ajoutez des MP3</div>';
+            return;
+        }
+        container.innerHTML = playlist.map((name, i) => `
+            <div class="playlist-item ${i === currentIndex ? 'active' : ''}" onclick="musicCmd('music_play', {index: ${i}})">
+                <span style="color:#999; font-size:11px; min-width:22px;">${i+1}</span>
+                <span class="track-name">${name}</span>
+                ${i === currentIndex ? '<span style="color:#005096; font-size:11px;">▶</span>' : ''}
+                <span class="track-del" onclick="event.stopPropagation(); deleteTrack(${i})">✕</span>
+            </div>
+        `).join('');
+    };
+
+    const deleteTrack = (index) => {
+        if (confirm('Supprimer cette piste ?')) {
+            piSend({ action: 'music_delete', index }, null);
+            setTimeout(fetchPlayerState, 500);
+        }
+    };
+
+    const fetchPlayerState = () => {
+        if (!PI_CMD_URL) return;
+        fetch(`${PI_CMD_URL}/music_state`, { signal: AbortSignal.timeout(2000) })
+        .then(r => r.json())
+        .then(s => {
+            // Piste en cours
+            document.getElementById('player-track').innerText = s.current_name || 'Aucune piste';
+
+            // Bouton play/pause
+            document.getElementById('btn-playpause').innerText = (s.is_playing && !s.is_paused) ? '⏸' : '▶';
+
+            // Position
+            const pos = s.position || 0;
+            document.getElementById('player-pos').innerText = fmtTime(pos);
+
+            // Durée estimée : on incrémente si la piste joue
+            if (s.is_playing && !s.is_paused) {
+                if (pos > _trackDuration) _trackDuration = pos + 60;
+            }
+            if (_trackDuration > 0) {
+                document.getElementById('player-dur').innerText = fmtTime(_trackDuration);
+                document.getElementById('player-progress').style.width = Math.min(100, (pos / _trackDuration) * 100) + '%';
+            }
+
+            // Playlist
+            renderPlaylist(s.playlist, s.current_index);
+        })
+        .catch(() => {});
+    };
+
+    // Polling état lecteur toutes les secondes
+    _playerInterval = setInterval(fetchPlayerState, 1000);
+    fetchPlayerState();
+
+    // Upload multiple vers playlist
+    window.uploadMusic = () => {
+        const files = document.getElementById('file_music').files;
+        if (!files || files.length === 0) return alert('Sélectionnez un ou plusieurs fichiers MP3');
+
+        const storage = window._storage;
+        let uploaded = 0;
+
+        Array.from(files).forEach(file => {
+            const sRef = storageRef(storage, `playlist/${file.name}`);
+            const task = uploadBytesResumable(sRef, file);
+            task.on('state_changed', null,
+                (err) => alert(`Erreur : ${err}`),
+                () => {
+                    getDownloadURL(task.snapshot.ref).then(url => {
+                        // Notifier le Pi de télécharger ce fichier
+                        piSend({ action: 'music_download', url, filename: file.name }, null);
+                        uploaded++;
+                        if (uploaded === files.length) {
+                            showSuccess();
+                            setTimeout(() => {
+                                piSend({ action: 'music_reload' }, null);
+                                setTimeout(fetchPlayerState, 2000);
+                            }, 1000);
+                        }
+                    });
+                }
+            );
+        });
     };
 
 </script>
