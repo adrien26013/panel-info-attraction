@@ -232,7 +232,7 @@
         modeEl.style.background = data.mode_auto ? "#e1f5fe" : "#ffebee";
 
         // Bannière annonce en cours
-        document.getElementById('annonce-banner').style.display = data.en_annonce ? 'block' : 'none';
+        document.getElementById('annonce-banner').style.display = (data.en_annonce === true) ? 'block' : 'none';
 
         if (data.info_message)
             document.getElementById('info_message').value = data.info_message;
