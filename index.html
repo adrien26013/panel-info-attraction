@@ -156,59 +156,52 @@
                 VALIDER PARAMÈTRES
             </button>
 
-            <hr style="margin:15px 0;">
 
-            <div style="font-size:12px; color:#555; margin-bottom:4px;">Musique d'ambiance (fichier MP3)</div>
-            <input type="file"
-                   id="file_music"
-                   accept="audio/mp3">
-
-            <button class="btn-update"
-                    onclick="uploadMusic()"
-                    style="background:var(--info);">
-                CHARGER MUSIQUE MP3
-            </button>
         </div>
 
         <div class="card">
             <span class="card-title">🎵 Lecteur & Playlist</span>
 
             <!-- Piste en cours -->
-            <div id="player-track" style="font-weight:bold; text-align:center; margin-bottom:8px; font-size:14px; color:#005096; min-height:20px;">Chargement...</div>
+            <div id="player-track" style="font-weight:bold; text-align:center; margin-bottom:4px; font-size:13px; color:#005096; min-height:18px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Chargement...</div>
 
             <!-- Timeline -->
-            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-                <span id="player-pos" style="font-size:12px; min-width:35px;">0:00</span>
-                <div style="flex:1; height:6px; background:#e2e8f0; border-radius:3px; cursor:pointer; position:relative;" id="seek-bar" onclick="seekTo(event)">
-                    <div id="player-progress" style="height:100%; background:#005096; border-radius:3px; width:0%; transition:width 0.5s linear;"></div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+                <span id="player-pos" style="font-size:11px; min-width:32px; color:#666;">0:00</span>
+                <div style="flex:1; height:5px; background:#e2e8f0; border-radius:3px; cursor:pointer;" id="seek-bar" onclick="seekTo(event)">
+                    <div id="player-progress" style="height:100%; background:#005096; border-radius:3px; width:0%;"></div>
                 </div>
-                <span id="player-dur" style="font-size:12px; min-width:35px; text-align:right;">0:00</span>
+                <span id="player-dur" style="font-size:11px; min-width:32px; text-align:right; color:#666;">0:00</span>
             </div>
 
-            <!-- Contrôles -->
-            <div style="display:flex; justify-content:center; align-items:center; gap:12px; margin-bottom:12px;">
-                <button onclick="musicCmd('music_prev')" style="width:44px; height:44px; border-radius:50%; background:#f0f3f8; border:1px solid #ccc; font-size:18px; display:flex; align-items:center; justify-content:center; cursor:pointer;">⏮</button>
-                <button id="btn-playpause" onclick="musicCmd('music_pause')" style="width:56px; height:56px; border-radius:50%; background:#005096; color:white; border:none; font-size:22px; cursor:pointer;">▶</button>
-                <button onclick="musicCmd('music_next')" style="width:44px; height:44px; border-radius:50%; background:#f0f3f8; border:1px solid #ccc; font-size:18px; display:flex; align-items:center; justify-content:center; cursor:pointer;">⏭</button>
+            <!-- Contrôles Pi (contrôle la musique sur le Pi) -->
+            <div style="font-size:11px; color:#999; text-align:center; margin-bottom:4px;">CONTRÔLE PI</div>
+            <div style="display:flex; justify-content:center; align-items:center; gap:10px; margin-bottom:10px;">
+                <button onclick="piCmd('music_prev')" style="width:40px;height:40px;border-radius:50%;background:#f0f3f8;border:1px solid #ccc;font-size:16px;cursor:pointer;">⏮</button>
+                <button id="btn-playpause" onclick="piCmd('music_pause')" style="width:52px;height:52px;border-radius:50%;background:#005096;color:white;border:none;font-size:20px;cursor:pointer;">▶</button>
+                <button onclick="piCmd('music_next')" style="width:40px;height:40px;border-radius:50%;background:#f0f3f8;border:1px solid #ccc;font-size:16px;cursor:pointer;">⏭</button>
             </div>
 
-            <!-- Volume -->
+            <!-- Volume Pi -->
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-                <span style="font-size:14px;">🔈</span>
-                <input type="range" id="volume-slider" min="0" max="100" value="80"
-                       oninput="setVolume(this.value)"
-                       style="flex:1; height:4px; cursor:pointer; margin-top:0;">
-                <span style="font-size:14px;">🔊</span>
+                <span style="font-size:13px;">🔈</span>
+                <input type="range" id="volume-slider" min="0" max="100" value="80" oninput="piSend({action:'music_volume',volume:this.value/100},null)" style="flex:1;cursor:pointer;margin-top:0;">
+                <span style="font-size:13px;">🔊</span>
             </div>
+
+            <!-- Écoute locale depuis le panel -->
+            <div style="font-size:11px; color:#999; text-align:center; margin-bottom:4px;">ÉCOUTE LOCALE (tablette/téléphone)</div>
+            <audio id="local-audio" controls style="width:100%; margin-bottom:10px; height:36px;"></audio>
 
             <!-- Playlist -->
             <div style="font-size:12px; color:#555; margin-bottom:6px; font-weight:bold;">PLAYLIST</div>
-            <div id="playlist-container" style="max-height:200px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px; margin-bottom:10px;"></div>
+            <div id="playlist-container" style="max-height:180px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px; margin-bottom:10px;"></div>
 
             <!-- Upload -->
-            <div style="font-size:12px; color:#555; margin-bottom:4px;">Ajouter un MP3 à la playlist</div>
+            <div style="font-size:12px; color:#555; margin-bottom:4px;">Ajouter un ou plusieurs MP3</div>
             <input type="file" id="file_music" accept="audio/mp3" multiple>
-            <button class="btn-update" onclick="uploadMusic()" style="background:var(--info);">
+            <div id="upload-progress" style="display:none; font-size:12px; color:#17a2b8; margin-top:4px;"></div>
+            <button class="btn-update" onclick="uploadMusic()" style="background:var(--info); margin-top:8px;">
                 AJOUTER À LA PLAYLIST
             </button>
         </div>
@@ -516,50 +509,63 @@
 
 
     // ── Lecteur audio ────────────────────────────────────────────────────────
-    let _playerInterval = null;
-    let _trackDuration  = 0;  // durée estimée (inconnue sans metadata)
+    let _trackDuration = 0;
+    let _playlistUrls  = {};   // nom → URL Firebase Storage pour écoute locale
+    let _lastIndex     = -1;
 
     const fmtTime = (s) => {
-        s = Math.max(0, Math.floor(s));
+        s = Math.max(0, Math.floor(s || 0));
         return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
     };
 
-    const musicCmd = (action, extra = {}) => {
+    // Commande vers le Pi (contrôle la lecture sur le Pi)
+    const piCmd = (action, extra = {}) => {
         piSend({ action, ...extra }, null);
     };
 
-    const setVolume = (val) => {
-        piSend({ action: 'music_volume', volume: val / 100 }, null);
-    };
-
     const seekTo = (event) => {
-        const bar = document.getElementById('seek-bar');
+        const bar  = document.getElementById('seek-bar');
         const rect = bar.getBoundingClientRect();
-        const pct  = (event.clientX - rect.left) / rect.width;
-        const pos  = Math.max(0, pct * (_trackDuration || 300));
+        const pct  = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+        const pos  = pct * (_trackDuration || 300);
         piSend({ action: 'music_seek', position: pos }, null);
+        // Aussi seek l'audio local si en lecture
+        const audio = document.getElementById('local-audio');
+        if (audio.src && audio.duration) audio.currentTime = pct * audio.duration;
     };
 
     const renderPlaylist = (playlist, currentIndex) => {
         const container = document.getElementById('playlist-container');
         if (!playlist || playlist.length === 0) {
-            container.innerHTML = '<div style="padding:12px; color:#999; text-align:center; font-size:13px;">Aucune piste — ajoutez des MP3</div>';
+            container.innerHTML = '<div style="padding:12px;color:#999;text-align:center;font-size:13px;">Aucune piste — ajoutez des MP3</div>';
             return;
         }
         container.innerHTML = playlist.map((name, i) => `
-            <div class="playlist-item ${i === currentIndex ? 'active' : ''}" onclick="musicCmd('music_play', {index: ${i}})">
-                <span style="color:#999; font-size:11px; min-width:22px;">${i+1}</span>
+            <div class="playlist-item ${i === currentIndex ? 'active' : ''}"
+                 onclick="selectTrack(${i}, '${name.replace(/'/g,"\'")}')">
+                <span style="color:#999;font-size:11px;min-width:22px;">${i+1}</span>
                 <span class="track-name">${name}</span>
-                ${i === currentIndex ? '<span style="color:#005096; font-size:11px;">▶</span>' : ''}
-                <span class="track-del" onclick="event.stopPropagation(); deleteTrack(${i})">✕</span>
+                ${i === currentIndex ? '<span style="color:#005096;font-size:10px;margin-right:4px;">▶</span>' : ''}
+                <span class="track-del" onclick="event.stopPropagation();deleteTrack(${i})">✕</span>
             </div>
         `).join('');
     };
 
-    const deleteTrack = (index) => {
-        if (confirm('Supprimer cette piste ?')) {
+    const selectTrack = (index, name) => {
+        // Lance sur le Pi
+        piSend({ action: 'music_play', index }, null);
+        // Lance en écoute locale si l'URL est disponible
+        const audio = document.getElementById('local-audio');
+        if (_playlistUrls[name]) {
+            audio.src = _playlistUrls[name];
+            audio.play().catch(() => {});
+        }
+    };
+
+    window.deleteTrack = (index) => {
+        if (confirm('Supprimer cette piste de la playlist ?')) {
             piSend({ action: 'music_delete', index }, null);
-            setTimeout(fetchPlayerState, 500);
+            setTimeout(fetchPlayerState, 800);
         }
     };
 
@@ -568,59 +574,68 @@
         fetch(`${PI_CMD_URL}/music_state`, { signal: AbortSignal.timeout(2000) })
         .then(r => r.json())
         .then(s => {
-            // Piste en cours
             document.getElementById('player-track').innerText = s.current_name || 'Aucune piste';
-
-            // Bouton play/pause
             document.getElementById('btn-playpause').innerText = (s.is_playing && !s.is_paused) ? '⏸' : '▶';
 
-            // Position
             const pos = s.position || 0;
-            document.getElementById('player-pos').innerText = fmtTime(pos);
+            const dur = s.duration || 0;
+            if (dur > 0) _trackDuration = dur;
 
-            // Durée estimée : on incrémente si la piste joue
-            if (s.is_playing && !s.is_paused) {
-                if (pos > _trackDuration) _trackDuration = pos + 60;
-            }
+            document.getElementById('player-pos').innerText = fmtTime(pos);
+            document.getElementById('player-dur').innerText = _trackDuration > 0 ? fmtTime(_trackDuration) : '--:--';
             if (_trackDuration > 0) {
-                document.getElementById('player-dur').innerText = fmtTime(_trackDuration);
                 document.getElementById('player-progress').style.width = Math.min(100, (pos / _trackDuration) * 100) + '%';
             }
 
-            // Playlist
+            // Changer l'audio local si la piste a changé
+            if (s.current_index !== _lastIndex) {
+                _lastIndex = s.current_index;
+                const audio = document.getElementById('local-audio');
+                const url   = _playlistUrls[s.current_name];
+                if (url && audio.src !== url) audio.src = url;
+                _trackDuration = 0;
+            }
+
             renderPlaylist(s.playlist, s.current_index);
         })
         .catch(() => {});
     };
 
-    // Polling état lecteur toutes les secondes
-    _playerInterval = setInterval(fetchPlayerState, 1000);
-    fetchPlayerState();
+    setInterval(fetchPlayerState, 1000);
+    setTimeout(fetchPlayerState, 500);
 
-    // Upload multiple vers playlist
+    // Upload multiple vers Firebase Storage puis téléchargement sur le Pi
     window.uploadMusic = () => {
         const files = document.getElementById('file_music').files;
         if (!files || files.length === 0) return alert('Sélectionnez un ou plusieurs fichiers MP3');
 
-        const storage = window._storage;
-        let uploaded = 0;
+        const prog = document.getElementById('upload-progress');
+        prog.style.display = 'block';
+        let done = 0;
 
         Array.from(files).forEach(file => {
-            const sRef = storageRef(storage, `playlist/${file.name}`);
+            prog.innerText = `Upload ${file.name}...`;
+            const sRef = storageRef(window._storage, `playlist/${file.name}`);
             const task = uploadBytesResumable(sRef, file);
-            task.on('state_changed', null,
-                (err) => alert(`Erreur : ${err}`),
+            task.on('state_changed',
+                (snap) => {
+                    const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+                    prog.innerText = `${file.name} : ${pct}%`;
+                },
+                (err) => { alert(`Erreur : ${err}`); prog.style.display='none'; },
                 () => {
                     getDownloadURL(task.snapshot.ref).then(url => {
-                        // Notifier le Pi de télécharger ce fichier
+                        _playlistUrls[file.name.replace('.mp3','')] = url;
                         piSend({ action: 'music_download', url, filename: file.name }, null);
-                        uploaded++;
-                        if (uploaded === files.length) {
+                        done++;
+                        if (done === files.length) {
+                            prog.innerText = `${done} fichier(s) ajouté(s) ✓`;
+                            setTimeout(() => { prog.style.display='none'; }, 3000);
                             showSuccess();
                             setTimeout(() => {
                                 piSend({ action: 'music_reload' }, null);
                                 setTimeout(fetchPlayerState, 2000);
-                            }, 1000);
+                            }, 2000);
                         }
                     });
                 }
