@@ -20,8 +20,12 @@
         #progress-container { width: 80%; max-width: 400px; background: #333; border-radius: 10px; overflow: hidden; margin-top: 20px; }
         #progress-bar { width: 0%; height: 20px; background: #17a2b8; transition: width 0.3s; }
         #success-popup { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); color:white; flex-direction:column; justify-content:center; align-items:center; z-index:2000; }
-        #annonce-banner { display:none; background:#e65c00; color:white; text-align:center; padding:12px; font-weight:bold; font-size:15px; border-radius:8px; margin-bottom:16px; animation: pulse 1.5s infinite; }
+        #annonce-banner { display:none; background:#e65c00; color:white; padding:12px 16px; font-weight:bold; font-size:15px; border-radius:8px; margin-bottom:16px; }
+        #annonce-banner .banner-title { text-align:center; margin-bottom:8px; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
+        #annonce-banner .timeline-wrap { display:flex; align-items:center; gap:8px; font-size:12px; font-weight:normal; }
+        #annonce-banner .timeline-bar { flex:1; height:6px; background:rgba(255,255,255,0.3); border-radius:3px; overflow:hidden; }
+        #annonce-banner .timeline-progress { height:100%; background:white; border-radius:3px; width:0%; transition:width 0.5s linear; }
     </style>
 </head>
 <body>
@@ -38,7 +42,14 @@
 </div>
 
 <div class="container">
-    <div id="annonce-banner">📢 DIFFUSION DE L'ANNONCE EN COURS... / ANNOUNCEMENT PLAYING...</div>
+    <div id="annonce-banner">
+        <div class="banner-title">📢 DIFFUSION DE L'ANNONCE EN COURS... / ANNOUNCEMENT PLAYING...</div>
+        <div class="timeline-wrap">
+            <span id="tl-current">0:00</span>
+            <div class="timeline-bar"><div class="timeline-progress" id="tl-progress"></div></div>
+            <span id="tl-total">0:00</span>
+        </div>
+    </div>
     <h2>PANEL OPÉRATEUR - DRAKKAR</h2>
     <div class="grid">
 
@@ -237,12 +248,49 @@
         if (!data) return;
 
         const modeEl = document.getElementById('status_mode');
-        modeEl.innerText = data.mode_auto ? "MODE : AUTOMATIQUE" : "MODE : MANUEL (FORCÉ)";
-        modeEl.style.color = data.mode_auto ? "var(--info)" : "var(--danger)";
-        modeEl.style.background = data.mode_auto ? "#e1f5fe" : "#ffebee";
+        if (data.force_open_panel) {
+            modeEl.innerText = "MODE : FORCE OUVERT";
+            modeEl.style.color = "var(--success)";
+            modeEl.style.background = "#e8f5e9";
+        } else if (data.force_close_panel) {
+            modeEl.innerText = "MODE : FORCE FERME";
+            modeEl.style.color = "var(--danger)";
+            modeEl.style.background = "#ffebee";
+        } else {
+            modeEl.innerText = data.mode_auto ? "MODE : AUTOMATIQUE" : "MODE : MANUEL";
+            modeEl.style.color = data.mode_auto ? "var(--info)" : "var(--danger)";
+            modeEl.style.background = data.mode_auto ? "#e1f5fe" : "#ffebee";
+        }
 
         // Bannière annonce en cours
-        document.getElementById('annonce-banner').style.display = (data.en_annonce === true) ? 'block' : 'none';
+        const isAnnonce = (data.en_annonce === true);
+        document.getElementById('annonce-banner').style.display = isAnnonce ? 'block' : 'none';
+        if (!isAnnonce) {
+            // Reset timeline quand l'annonce est terminée
+            clearInterval(window._tlInterval);
+            document.getElementById('tl-progress').style.width = '0%';
+            document.getElementById('tl-current').innerText = '0:00';
+            document.getElementById('tl-total').innerText = '0:00';
+        } else if (!window._tlInterval) {
+            // Démarrer la timeline si pas encore démarrée
+            const startTime = Date.now();
+            const duration  = (data.annonce_duration || 120) * 1000; // durée en ms
+            const fmtTime = (ms) => {
+                const s = Math.floor(ms / 1000);
+                return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+            };
+            document.getElementById('tl-total').innerText = fmtTime(duration);
+            window._tlInterval = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                const pct = Math.min(100, (elapsed / duration) * 100);
+                document.getElementById('tl-progress').style.width = pct + '%';
+                document.getElementById('tl-current').innerText = fmtTime(elapsed);
+                if (elapsed >= duration) {
+                    clearInterval(window._tlInterval);
+                    window._tlInterval = null;
+                }
+            }, 500);
+        }
 
         if (data.info_message)
             document.getElementById('info_message').value = data.info_message;
