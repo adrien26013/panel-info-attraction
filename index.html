@@ -216,8 +216,15 @@
     const storage = getStorage(app);
     let currentTask = null;
 
-    // IP du Raspberry Pi sur le réseau local
-    const PI_CMD_URL = "https://arrested-photograph-flu-backgrounds.trycloudflare.com";
+    // URL du tunnel lue depuis Firebase — mise à jour automatiquement par le Pi au démarrage
+    let PI_CMD_URL = null;
+    onValue(ref(db, 'attractions/DRAKKAR/tunnel_url'), (snap) => {
+        const url = snap.val();
+        if (url) {
+            PI_CMD_URL = url;
+            console.log(`[PANEL] Tunnel URL : ${PI_CMD_URL}`);
+        }
+    });
 
     window.showSuccess = () => {
         const p = document.getElementById('success-popup');
@@ -290,13 +297,18 @@
     // avant tout éventuel reset côté Raspberry (le Pi reset lui-même après exécution)
     // Fonction centrale : envoie au Pi directement, fallback Firebase si indisponible
     const piSend = (payload, firebaseFallback) => {
-        const tryDirect = () => fetch(PI_CMD_URL, {
+        if (!PI_CMD_URL) {
+            console.log(`[PI] URL non disponible, fallback Firebase`);
+            if (firebaseFallback) firebaseFallback();
+            else showSuccess();
+            return;
+        }
+        fetch(PI_CMD_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
             signal: AbortSignal.timeout(2000)
-        });
-        tryDirect()
+        })
         .then(r => r.json())
         .then(() => { console.log(`[PI] OK`, payload); showSuccess(); })
         .catch(() => {
