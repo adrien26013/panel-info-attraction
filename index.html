@@ -570,9 +570,13 @@
     const selectTrack = (index, name) => {
         piSend({ action: 'music_play', index }, null);
         const audio = document.getElementById('local-audio');
-        if (_playlistUrls[name]) {
-            audio.src = _playlistUrls[name];
-            audio.play().catch(() => {});
+        const url = _playlistUrls[name];
+        if (url) {
+            if (audio.src !== url) audio.src = url;
+            audio.currentTime = 0;
+            audio.play().catch(e => console.warn('[AUDIO]', e));
+        } else {
+            console.warn('[AUDIO] URL manquante pour:', name, Object.keys(_playlistUrls));
         }
     };
 
@@ -592,6 +596,11 @@
         if (_trackDuration > 0) {
             document.getElementById('player-progress').style.width =
                 Math.min(100, (pos / _trackDuration) * 100) + '%';
+        }
+        // Sync audio local avec position Pi si décalage > 2s
+        const audio = document.getElementById('local-audio');
+        if (audio.src && !audio.paused && Math.abs(audio.currentTime - pos) > 2) {
+            audio.currentTime = pos;
         }
     }, 250);
 
@@ -616,7 +625,15 @@
                 _trackDuration = s.duration || 0;
                 const audio = document.getElementById('local-audio');
                 const url   = _playlistUrls[s.current_name];
-                if (url) { audio.src = url; }
+                if (url && audio.src !== url) {
+                    audio.src = url;
+                    audio.currentTime = s.position || 0;
+                }
+            }
+            // Stopper audio local si Pi en pause ou fermé
+            const audioEl = document.getElementById('local-audio');
+            if (!s.is_playing || s.is_paused) {
+                if (!audioEl.paused) audioEl.pause();
             }
 
             renderPlaylist(s.playlist, s.current_index);
