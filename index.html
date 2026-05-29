@@ -288,76 +288,86 @@
     // BUGFIX 2 : sendCommand écrit la commande puis attend 100ms
     // pour s'assurer que Firebase a bien reçu la valeur non-vide
     // avant tout éventuel reset côté Raspberry (le Pi reset lui-même après exécution)
-    window.sendCommand = (cmd) => {
-        console.log(`[PANEL] sendCommand : ${cmd}`);
-        fetch(`${PI_CMD_URL}`, {
+    // Fonction centrale : envoie au Pi directement, fallback Firebase si indisponible
+    const piSend = (payload, firebaseFallback) => {
+        const tryDirect = () => fetch(PI_CMD_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ cmd: cmd })
-        })
+            body: JSON.stringify(payload),
+            signal: AbortSignal.timeout(2000)
+        });
+        tryDirect()
         .then(r => r.json())
-        .then(() => {
-            console.log(`[PANEL] Commande envoyée au Pi : ${cmd} ✓`);
-            showSuccess();
-        })
-        .catch(err => {
-            console.error(`[PANEL] ERREUR envoi Pi : ${err.message}`);
-            // Fallback Firebase si le Pi n'est pas joignable
-            console.log(`[PANEL] Fallback Firebase...`);
-            update(dbRef, { trigger_cmd: cmd, trigger_time: Date.now() })
-            .then(() => showSuccess())
-            .catch(e => alert("Erreur : " + e.message));
+        .then(() => { console.log(`[PI] OK`, payload); showSuccess(); })
+        .catch(() => {
+            console.log(`[Pi indispo] Fallback Firebase`);
+            if (firebaseFallback) firebaseFallback();
+            else showSuccess();
         });
     };
 
+    window.sendCommand = (cmd) => {
+        piSend(
+            { action: 'commande', cmd },
+            () => update(dbRef, { trigger_cmd: cmd, trigger_time: Date.now() }).then(() => showSuccess())
+        );
+    };
+
     window.setWaitTime = (val) => {
-        update(dbRef, { show_wait_time: val }).then(() => { showSuccess(); });
+        piSend(
+            { action: 'wait_time', val },
+            () => update(dbRef, { show_wait_time: val }).then(() => showSuccess())
+        );
     };
 
     // BUGFIX 2 : setForce n'efface plus force_open/close après 1s
     // C'est le Pi qui gère l'état via mode_auto — on envoie simplement les flags
     window.setForce = (m) => {
-        const payload = {
-            mode_auto: (m === 'AUTO'),
-            force_open_panel: (m === 'OPEN'),
-            force_close_panel: (m === 'CLOSE')
-        };
-        update(dbRef, payload).then(() => { showSuccess(); });
+        piSend(
+            { action: 'force', mode: m },
+            () => update(dbRef, {
+                mode_auto: (m === 'AUTO'),
+                force_open_panel: (m === 'OPEN'),
+                force_close_panel: (m === 'CLOSE')
+            }).then(() => showSuccess())
+        );
     };
 
     window.updateInfo = () => {
-        update(dbRef, {
-            info_message: document.getElementById('info_message').value,
-            page_duration: parseInt(document.getElementById('page_duration').value) || 8
-        }).then(() => { showSuccess(); });
+        const info_message  = document.getElementById('info_message').value;
+        const page_duration = parseInt(document.getElementById('page_duration').value) || 8;
+        piSend(
+            { action: 'message', info_message, page_duration },
+            () => update(dbRef, { info_message, page_duration }).then(() => showSuccess())
+        );
     };
 
     window.updateParams = () => {
         const h = Number(document.getElementById('secu_h').value || 0);
         const m = Number(document.getElementById('secu_m').value || 0);
         const s = Number(document.getElementById('secu_s').value || 0);
-        const total_secu = (h * 3600) + (m * 60) + s;
-
-        update(dbRef, {
-            capacite: Number(document.getElementById('capacite').value || 0),
-            intervalle_secu: total_secu,
-            intervalle_calcul: Number(document.getElementById('int_calc').value || 7)
-        }).then(() => {
-            console.log("[PANEL] intervalle_secu envoyé =", total_secu);
-            showSuccess();
-        });
+        const total_secu      = (h * 3600) + (m * 60) + s;
+        const capacite        = Number(document.getElementById('capacite').value || 0);
+        const intervalle_calcul = Number(document.getElementById('int_calc').value || 7);
+        piSend(
+            { action: 'params', capacite, intervalle_secu: total_secu, intervalle_calcul },
+            () => update(dbRef, { capacite, intervalle_secu: total_secu, intervalle_calcul })
+                  .then(() => showSuccess())
+        );
     };
 
     // BUGFIX 3 : On envoie dates_ouverture (tableau de strings YYYY-MM-DD)
     // Le Python lira ce tableau pour vérifier si la date du jour est incluse
     window.updateSchedule = () => {
-        update(dbRef, {
-            horaires_ouverture: {
-                heure_ouverture: document.getElementById('h_ouv').value,
-                heure_fermeture: document.getElementById('h_ferm').value,
-                dates_ouverture: window.selectedDates   // [] = ouvert tous les jours
-            }
-        }).then(() => { showSuccess(); });
+        const horaires_ouverture = {
+            heure_ouverture: document.getElementById('h_ouv').value,
+            heure_fermeture: document.getElementById('h_ferm').value,
+            dates_ouverture: window.selectedDates
+        };
+        piSend(
+            { action: 'planning', horaires_ouverture },
+            () => update(dbRef, { horaires_ouverture }).then(() => showSuccess())
+        );
     };
 
     window.cancelUpload = () => {
