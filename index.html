@@ -921,7 +921,7 @@
             var isSelected = window.selectedDates.includes(dateStr);
             var isToday    = dateStr === today;
             var cls = 'cal-day' + (isSelected ? ' selected' : '') + (isToday ? ' today' : '');
-            grid.innerHTML += '<div class="' + cls + '" onclick="toggleCalDay('' + dateStr + '')">' + d + '</div>';
+            grid.innerHTML += '<div class="' + cls + '" onclick="window.toggleCalDay(\'' + dateStr + '\')">' + d + '</div>';
         }
     }
 
