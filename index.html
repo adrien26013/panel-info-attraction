@@ -286,18 +286,26 @@
         if (!data) return;
 
         const modeEl = document.getElementById('status_mode');
+        const isOpen  = data.is_open === true;
         if (data.force_open_panel) {
-            modeEl.innerText = "MODE : FORCE OUVERT";
+            modeEl.innerHTML = "MANU : OUVERT";
             modeEl.style.color = "var(--success)";
             modeEl.style.background = "#e8f5e9";
         } else if (data.force_close_panel) {
-            modeEl.innerText = "MODE : FORCE FERME";
+            modeEl.innerHTML = "MANU : FERME";
             modeEl.style.color = "var(--danger)";
             modeEl.style.background = "#ffebee";
+        } else if (data.mode_auto) {
+            const etat = isOpen
+                ? '<span style="color:#28a745;font-weight:bold;"> ● OUVERT</span>'
+                : '<span style="color:#dc3545;font-weight:bold;"> ● FERME</span>';
+            modeEl.innerHTML = "AUTO" + etat;
+            modeEl.style.color = "var(--info)";
+            modeEl.style.background = "#e1f5fe";
         } else {
-            modeEl.innerText = data.mode_auto ? "MODE : AUTOMATIQUE" : "MODE : MANUEL";
-            modeEl.style.color = data.mode_auto ? "var(--info)" : "var(--danger)";
-            modeEl.style.background = data.mode_auto ? "#e1f5fe" : "#ffebee";
+            modeEl.innerHTML = "MODE : MANUEL";
+            modeEl.style.color = "var(--danger)";
+            modeEl.style.background = "#ffebee";
         }
 
         // Bannière annonce en cours
