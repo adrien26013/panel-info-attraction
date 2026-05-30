@@ -185,7 +185,7 @@
             <!-- Volume Pi -->
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
                 <span style="font-size:13px;">🔈</span>
-                <input type="range" id="volume-slider" min="0" max="100" value="80" oninput="piSend({action:'music_volume',volume:this.value/100},null)" style="flex:1;cursor:pointer;margin-top:0;">
+                <input type="range" id="volume-slider" min="0" max="100" value="80" oninput="window.setVolume(this.value)" style="flex:1;cursor:pointer;margin-top:0;">
                 <span style="font-size:13px;">🔊</span>
             </div>
 
@@ -521,7 +521,8 @@
         return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
     };
 
-    window.piCmd = (action, extra = {}) => piSend({ action, ...extra }, null);
+    window.piCmd    = (action, extra = {}) => piSend({ action, ...extra }, null);
+    window.setVolume = (val) => piSend({ action: 'music_volume', volume: val / 100 }, null);
 
     const seekTo = (event) => {
         const bar  = document.getElementById('seek-bar');
