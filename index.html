@@ -168,7 +168,7 @@
             <!-- Timeline -->
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
                 <span id="player-pos" style="font-size:11px; min-width:32px; color:#666;">0:00</span>
-                <div style="flex:1; height:5px; background:#e2e8f0; border-radius:3px; cursor:pointer;" id="seek-bar" onclick="seekTo(event)">
+                <div style="flex:1; height:5px; background:#e2e8f0; border-radius:3px; cursor:pointer;" id="seek-bar" onclick="window.seekTo(event)">
                     <div id="player-progress" style="height:100%; background:#005096; border-radius:3px; width:0%;"></div>
                 </div>
                 <span id="player-dur" style="font-size:11px; min-width:32px; text-align:right; color:#666;">0:00</span>
@@ -532,7 +532,7 @@
     window.piCmd    = (action, extra = {}) => piSend({ action, ...extra }, null);
     window.setVolume = (val) => piSend({ action: 'music_volume', volume: val / 100 }, null);
 
-    const seekTo = (event) => {
+    window.seekTo = function(event) {
         const bar  = document.getElementById('seek-bar');
         const rect = bar.getBoundingClientRect();
         const pct  = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
