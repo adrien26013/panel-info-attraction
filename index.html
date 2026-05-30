@@ -27,6 +27,25 @@
         .playlist-item .track-del { color:#dc3545; font-size:16px; padding:0 4px; cursor:pointer; flex-shrink:0; }
         input[type=range] { -webkit-appearance:none; height:4px; background:#e2e8f0; border-radius:2px; outline:none; border:none; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:#005096; cursor:pointer; }
+        .stat-box { display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:#f8fafc; border-radius:8px; margin-bottom:6px; }
+        .stat-label { font-size:12px; color:#666; }
+        .stat-value { font-size:14px; font-weight:bold; color:#005096; }
+        .stat-bar { height:6px; background:#e2e8f0; border-radius:3px; margin-top:4px; overflow:hidden; }
+        .stat-bar-fill { height:100%; border-radius:3px; transition:width 0.5s; }
+        .history-item { display:flex; justify-content:space-between; padding:6px 10px; border-bottom:1px solid #f0f3f8; font-size:12px; }
+        .history-time { color:#999; min-width:60px; }
+        .history-type { color:#005096; font-weight:bold; }
+        .firebase-dot { width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:6px; }
+        .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; margin-top:8px; }
+        .cal-day { text-align:center; padding:6px 2px; border-radius:6px; cursor:pointer; font-size:12px; border:1px solid transparent; }
+        .cal-day:hover { background:#e1f5fe; }
+        .cal-day.selected { background:#005096; color:white; }
+        .cal-day.today { border:2px solid #005096; font-weight:bold; }
+        .cal-day.other-month { color:#ccc; }
+        .cal-header { text-align:center; font-size:11px; color:#999; padding:4px; }
+        .day-schedule { display:flex; align-items:center; gap:6px; padding:4px 0; font-size:12px; }
+        .day-schedule input[type=checkbox] { width:auto; margin:0; }
+        .day-schedule input[type=time] { width:80px; padding:4px 6px; font-size:12px; margin:0; }
         #annonce-banner { display:none; background:#e65c00; color:white; padding:12px 16px; font-weight:bold; font-size:15px; border-radius:8px; margin-bottom:16px; }
         #annonce-banner .banner-title { text-align:center; margin-bottom:8px; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
@@ -92,8 +111,6 @@
             <button onclick="addDate()">
                 + AJOUTER DATE SPÉCIALE
             </button>
-
-            <div id="date_list" style="margin:10px 0;"></div>
 
             <button class="btn-update" onclick="updateSchedule()">
                 VALIDER PLANNING
@@ -226,6 +243,73 @@
                     onclick="updateInfo()">
                 METTRE À JOUR MESSAGE
             </button>
+        </div>
+
+        <!-- Monitoring Pi -->
+        <div class="card">
+            <span class="card-title">📊 Monitoring Pi</span>
+            <div style="display:flex; align-items:center; margin-bottom:10px;">
+                <span class="firebase-dot" id="firebase-dot" style="background:#ccc;"></span>
+                <span id="firebase-status" style="font-size:13px; color:#666;">Firebase...</span>
+                <span style="flex:1;"></span>
+                <span id="pi-uptime" style="font-size:12px; color:#999;">Uptime: --</span>
+            </div>
+            <div class="stat-box">
+                <div style="flex:1;">
+                    <div style="display:flex; justify-content:space-between;">
+                        <span class="stat-label">CPU</span>
+                        <span class="stat-value" id="pi-cpu">--%</span>
+                    </div>
+                    <div class="stat-bar"><div class="stat-bar-fill" id="pi-cpu-bar" style="background:#17a2b8; width:0%;"></div></div>
+                </div>
+            </div>
+            <div class="stat-box">
+                <div style="flex:1;">
+                    <div style="display:flex; justify-content:space-between;">
+                        <span class="stat-label">RAM</span>
+                        <span class="stat-value" id="pi-ram">--%</span>
+                    </div>
+                    <div class="stat-bar"><div class="stat-bar-fill" id="pi-ram-bar" style="background:#28a745; width:0%;"></div></div>
+                </div>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">Température CPU</span>
+                <span class="stat-value" id="pi-temp">--°C</span>
+            </div>
+            <div style="font-size:12px; color:#555; font-weight:bold; margin-top:10px; margin-bottom:6px;">HISTORIQUE ANNONCES</div>
+            <div id="annonce-history" style="max-height:200px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px;">
+                <div style="padding:12px; color:#999; text-align:center; font-size:13px;">Aucune annonce</div>
+            </div>
+        </div>
+
+        <!-- Planning par jour de semaine -->
+        <div class="card">
+            <span class="card-title">📅 Horaires par jour</span>
+            <div style="font-size:12px; color:#555; margin-bottom:8px;">Personnalisez les horaires pour chaque jour de la semaine :</div>
+            <div id="week-schedule"></div>
+            <button class="btn-update" onclick="saveWeekSchedule()" style="margin-top:10px;">
+                VALIDER HORAIRES SEMAINE
+            </button>
+
+            <hr style="margin:15px 0;">
+
+            <!-- Calendrier visuel -->
+            <div style="font-size:12px; color:#555; margin-bottom:6px; font-weight:bold;">CALENDRIER DATES OUVERTURE</div>
+            <div style="font-size:11px; color:#999; margin-bottom:8px;">Cliquez sur les jours pour les sélectionner (vide = tous les jours)</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <button onclick="calPrev()" style="width:32px; height:32px; padding:0; border-radius:6px; background:#f0f3f8; border:1px solid #ccc;">◀</button>
+                <span id="cal-month-label" style="font-weight:bold; font-size:14px;"></span>
+                <button onclick="calNext()" style="width:32px; height:32px; padding:0; border-radius:6px; background:#f0f3f8; border:1px solid #ccc;">▶</button>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:2px; margin-bottom:4px;">
+                <div class="cal-header">L</div><div class="cal-header">M</div>
+                <div class="cal-header">M</div><div class="cal-header">J</div>
+                <div class="cal-header">V</div><div class="cal-header">S</div>
+                <div class="cal-header">D</div>
+            </div>
+            <div class="cal-grid" id="cal-grid"></div>
+            <div id="date_list" style="margin:10px 0;"></div>
+            <button class="btn-update" onclick="saveCalendar()">VALIDER CALENDRIER</button>
         </div>
 
     </div>
@@ -695,6 +779,182 @@
                 }
             );
         });
+    };
+
+
+    // ── Indicateur Firebase ──────────────────────────────────────────────────
+    var _firebaseOk = false;
+    onValue(dbRef, function(snapshot) {
+        if (snapshot.val()) {
+            _firebaseOk = true;
+            document.getElementById('firebase-dot').style.background = '#28a745';
+            document.getElementById('firebase-status').innerText = 'Firebase connecté';
+            document.getElementById('firebase-status').style.color = '#28a745';
+        }
+    });
+    // Si pas de données après 5s → Firebase KO
+    setTimeout(function() {
+        if (!_firebaseOk) {
+            document.getElementById('firebase-dot').style.background = '#dc3545';
+            document.getElementById('firebase-status').innerText = 'Firebase déconnecté';
+            document.getElementById('firebase-status').style.color = '#dc3545';
+        }
+    }, 5000);
+
+    // ── Monitoring Pi ────────────────────────────────────────────────────────
+    function fetchPiStats() {
+        if (!PI_CMD_URL) return;
+        fetch(PI_CMD_URL + '/pi_stats', { signal: AbortSignal.timeout(3000) })
+        .then(function(r) { return r.json(); })
+        .then(function(s) {
+            document.getElementById('pi-cpu').innerText  = s.cpu + '%';
+            document.getElementById('pi-ram').innerText  = s.ram + '%';
+            document.getElementById('pi-temp').innerText = s.temp + 'C';
+            document.getElementById('pi-uptime').innerText = 'Uptime: ' + s.uptime;
+            document.getElementById('pi-cpu-bar').style.width = s.cpu + '%';
+            document.getElementById('pi-ram-bar').style.width = s.ram + '%';
+            // Couleur température
+            var tempBar = document.getElementById('pi-temp');
+            tempBar.style.color = s.temp > 70 ? '#dc3545' : s.temp > 55 ? '#f39c12' : '#28a745';
+            // Historique annonces
+            var hist = document.getElementById('annonce-history');
+            if (s.history && s.history.length > 0) {
+                hist.innerHTML = s.history.map(function(h) {
+                    return '<div class="history-item"><span class="history-time">' + h.time + '</span>' +
+                           '<span class="history-type">' + h.type + '</span>' +
+                           '<span style="color:#999;font-size:11px;">' + h.date + '</span></div>';
+                }).join('');
+            }
+        })
+        .catch(function() {});
+    }
+    setInterval(fetchPiStats, 5000);
+    setTimeout(fetchPiStats, 2000);
+
+    // ── Horaires par jour de semaine ─────────────────────────────────────────
+    var JOURS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+    var _weekSchedule = {};
+
+    function renderWeekSchedule(data) {
+        var container = document.getElementById('week-schedule');
+        container.innerHTML = '';
+        JOURS.forEach(function(jour, i) {
+            var hs = (_weekSchedule[String(i)] || {});
+            var actif = hs.actif !== false;
+            var ouv   = hs.ouverture || '08:00';
+            var ferm  = hs.fermeture || '18:00';
+            var div = document.createElement('div');
+            div.className = 'day-schedule';
+            div.innerHTML =
+                '<input type="checkbox" id="day-' + i + '" ' + (actif ? 'checked' : '') + ' onchange="toggleDay(' + i + ', this.checked)">' +
+                '<label for="day-' + i + '" style="min-width:70px;font-weight:bold;">' + jour + '</label>' +
+                '<input type="time" id="day-ouv-' + i + '" value="' + ouv + '" ' + (actif ? '' : 'disabled') + '>' +
+                '<span style="color:#999;">→</span>' +
+                '<input type="time" id="day-ferm-' + i + '" value="' + ferm + '" ' + (actif ? '' : 'disabled') + '>';
+            container.appendChild(div);
+        });
+    }
+
+    window.toggleDay = function(i, checked) {
+        document.getElementById('day-ouv-' + i).disabled  = !checked;
+        document.getElementById('day-ferm-' + i).disabled = !checked;
+    };
+
+    window.saveWeekSchedule = function() {
+        var sched = {};
+        JOURS.forEach(function(j, i) {
+            sched[String(i)] = {
+                actif:      document.getElementById('day-' + i).checked,
+                ouverture:  document.getElementById('day-ouv-' + i).value,
+                fermeture:  document.getElementById('day-ferm-' + i).value
+            };
+        });
+        _weekSchedule = sched;
+        piSend({ action: 'planning', horaires_ouverture: {
+            heure_ouverture: document.getElementById('h_ouv').value,
+            heure_fermeture: document.getElementById('h_ferm').value,
+            dates_ouverture: window.selectedDates,
+            horaires_semaine: sched
+        }}, function() {
+            update(dbRef, { horaires_ouverture: {
+                heure_ouverture: document.getElementById('h_ouv').value,
+                heure_fermeture: document.getElementById('h_ferm').value,
+                dates_ouverture: window.selectedDates,
+                horaires_semaine: sched
+            }}).then(function() { showSuccess(); });
+        });
+        showSuccess();
+    };
+
+    // Lire horaires_semaine depuis Firebase
+    onValue(ref(db, 'attractions/DRAKKAR/horaires_ouverture/horaires_semaine'), function(snap) {
+        if (snap.val()) {
+            _weekSchedule = snap.val();
+            renderWeekSchedule(_weekSchedule);
+        } else {
+            renderWeekSchedule({});
+        }
+    });
+
+    // ── Calendrier visuel ────────────────────────────────────────────────────
+    var _calYear  = new Date().getFullYear();
+    var _calMonth = new Date().getMonth();
+
+    function renderCalendar() {
+        var label = document.getElementById('cal-month-label');
+        var grid  = document.getElementById('cal-grid');
+        var MOIS  = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+        label.innerText = MOIS[_calMonth] + ' ' + _calYear;
+
+        var firstDay = new Date(_calYear, _calMonth, 1).getDay();
+        firstDay = (firstDay === 0) ? 6 : firstDay - 1; // lundi=0
+        var daysInMonth = new Date(_calYear, _calMonth + 1, 0).getDate();
+        var today = new Date().toISOString().split('T')[0];
+
+        grid.innerHTML = '';
+        // Cases vides avant le 1er
+        for (var i = 0; i < firstDay; i++) {
+            grid.innerHTML += '<div></div>';
+        }
+        for (var d = 1; d <= daysInMonth; d++) {
+            var dateStr = _calYear + '-' + String(_calMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+            var isSelected = window.selectedDates.includes(dateStr);
+            var isToday    = dateStr === today;
+            var cls = 'cal-day' + (isSelected ? ' selected' : '') + (isToday ? ' today' : '');
+            grid.innerHTML += '<div class="' + cls + '" onclick="toggleCalDay('' + dateStr + '')">' + d + '</div>';
+        }
+    }
+
+    window.toggleCalDay = function(dateStr) {
+        var idx = window.selectedDates.indexOf(dateStr);
+        if (idx >= 0) window.selectedDates.splice(idx, 1);
+        else window.selectedDates.push(dateStr);
+        window.selectedDates.sort();
+        renderCalendar();
+        window.renderDates();
+    };
+
+    window.calPrev = function() {
+        _calMonth--;
+        if (_calMonth < 0) { _calMonth = 11; _calYear--; }
+        renderCalendar();
+    };
+    window.calNext = function() {
+        _calMonth++;
+        if (_calMonth > 11) { _calMonth = 0; _calYear++; }
+        renderCalendar();
+    };
+    window.saveCalendar = function() {
+        window.updateSchedule();
+    };
+
+    // Init calendrier
+    setTimeout(renderCalendar, 500);
+    // Re-render quand selectedDates change
+    var _origRenderDates = window.renderDates;
+    window.renderDates = function() {
+        _origRenderDates();
+        renderCalendar();
     };
 
 </script>
