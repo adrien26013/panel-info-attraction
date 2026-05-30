@@ -587,62 +587,68 @@
         }
     };
 
-    // Mise à jour de la timeline locale toutes les 250ms (fluide, sans attendre le poll)
-    setInterval(() => {
-        if (!_localPlaying) return;
-        const elapsed = (Date.now() - _localPollTime) / 1000;
-        const pos = Math.min(_localPos + elapsed, _trackDuration || 9999);
+    // Timeline fluide — interpolation locale toutes les 250ms
+    setInterval(function() {
+        if (!_localPlaying) return;  // fermé ou en pause : on ne bouge pas
+        var elapsed = (Date.now() - _localPollTime) / 1000;
+        var pos = _localPos + elapsed;
+        // Clamp : ne jamais dépasser la durée ni reboucler
+        if (_trackDuration > 0) pos = Math.min(pos, _trackDuration);
         document.getElementById('player-pos').innerText = fmtTime(pos);
         if (_trackDuration > 0) {
             document.getElementById('player-progress').style.width =
                 Math.min(100, (pos / _trackDuration) * 100) + '%';
         }
-        // Sync audio local avec position Pi si décalage > 2s
-        const audio = document.getElementById('local-audio');
-        if (audio.src && !audio.paused && Math.abs(audio.currentTime - pos) > 2) {
-            audio.currentTime = pos;
-        }
     }, 250);
 
-    // Poll état Pi toutes les 3s (juste pour sync piste/index/durée)
-    const fetchPlayerState = () => {
+    // Poll état Pi toutes les 4s — sync piste/durée/état
+    var fetchPlayerState = function() {
         if (!PI_CMD_URL) return;
-        fetch(`${PI_CMD_URL}/music_state`, { signal: AbortSignal.timeout(3000) })
-        .then(r => r.json())
-        .then(s => {
-            document.getElementById('player-track').innerText = s.current_name || 'Aucune piste';
-            document.getElementById('btn-playpause').innerText = (s.is_playing && !s.is_paused) ? '⏸' : '▶';
-            document.getElementById('player-dur').innerText = s.duration > 0 ? fmtTime(s.duration) : '--:--';
+        fetch(PI_CMD_URL + '/music_state', { signal: AbortSignal.timeout(3000) })
+        .then(function(r) { return r.json(); })
+        .then(function(s) {
+            var playing = (s.is_playing === true) && (s.is_paused !== true);
 
+            document.getElementById('player-track').innerText = s.current_name || 'Aucune piste';
+            document.getElementById('btn-playpause').innerText = playing ? '⏸' : '▶';
+            document.getElementById('player-dur').innerText = (s.duration > 0) ? fmtTime(s.duration) : '--:--';
+
+            // Mettre à jour état local
             if (s.duration > 0) _trackDuration = s.duration;
-            _localPlaying  = s.is_playing && !s.is_paused;
+            _localPlaying  = playing;
             _localPos      = s.position || 0;
             _localPollTime = Date.now();
 
-            // Changer audio local si piste changée
+            // Si pas en lecture : figer la timeline à la position actuelle
+            if (!playing) {
+                document.getElementById('player-pos').innerText = fmtTime(_localPos);
+                if (_trackDuration > 0) {
+                    document.getElementById('player-progress').style.width =
+                        Math.min(100, (_localPos / _trackDuration) * 100) + '%';
+                }
+                var audioEl = document.getElementById('local-audio');
+                if (audioEl && !audioEl.paused) audioEl.pause();
+            }
+
+            // Changer audio local si la piste a changé
             if (s.current_index !== _lastIndex) {
-                _lastIndex = s.current_index;
+                _lastIndex     = s.current_index;
                 _trackDuration = s.duration || 0;
-                const audio = document.getElementById('local-audio');
-                const url   = _playlistUrls[s.current_name];
+                var audio = document.getElementById('local-audio');
+                var url   = _playlistUrls[s.current_name];
                 if (url && audio.src !== url) {
                     audio.src = url;
                     audio.currentTime = s.position || 0;
                 }
             }
-            // Stopper audio local si Pi en pause ou fermé
-            const audioEl = document.getElementById('local-audio');
-            if (!s.is_playing || s.is_paused) {
-                if (!audioEl.paused) audioEl.pause();
-            }
 
             renderPlaylist(s.playlist, s.current_index);
         })
-        .catch(() => {});
+        .catch(function() {});
     };
 
-    setInterval(fetchPlayerState, 3000);
-    setTimeout(fetchPlayerState, 500);
+    setInterval(fetchPlayerState, 4000);
+    setTimeout(fetchPlayerState, 1000);
 
     window.uploadMusic = () => {
         const files = document.getElementById('file_music').files;
