@@ -611,7 +611,7 @@
     }, 250);
 
     // Poll état Pi toutes les 4s — sync piste/durée/état
-    var fetchPlayerState = function() {
+    function fetchPlayerState() {
         if (!PI_CMD_URL) return;
         fetch(PI_CMD_URL + '/music_state', { signal: AbortSignal.timeout(3000) })
         .then(function(r) { return r.json(); })
@@ -654,7 +654,7 @@
             renderPlaylist(s.playlist, s.current_index);
         })
         .catch(function() {});
-    };
+    }
 
     setInterval(fetchPlayerState, 4000);
     setTimeout(fetchPlayerState, 1000);
