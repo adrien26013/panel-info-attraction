@@ -666,23 +666,20 @@
     };
 
     window.selectTrack = function(index, name) {
+        // Lancer sur le Pi
         piSend({ action: 'music_play', index: index }, null);
-        const audio = document.getElementById('local-audio');
-        const url = _playlistUrls[name];
-        console.log('[AUDIO] selectTrack', name, 'URL:', url ? url.substring(0,60)+'...' : 'MANQUANTE');
-        if (url) {
-            if (audio.src !== url) {
-                audio.src = url;
-                audio.load();
-            }
-            audio.currentTime = 0;
+        // Écoute locale via stream direct depuis le Pi (pas Firebase Storage — CORS)
+        var audio = document.getElementById('local-audio');
+        if (PI_CMD_URL) {
+            var streamUrl = PI_CMD_URL + '/stream?index=' + index;
+            console.log('[AUDIO] Stream:', streamUrl);
+            audio.src = streamUrl;
+            audio.load();
             audio.play().then(function() {
                 console.log('[AUDIO] Lecture locale OK');
             }).catch(function(e) {
-                console.error('[AUDIO] Erreur lecture:', e.message);
+                console.warn('[AUDIO] Erreur:', e.message);
             });
-        } else {
-            console.warn('[AUDIO] URL manquante pour:', name, '- URLs dispo:', Object.keys(_playlistUrls));
         }
     };
 
@@ -842,7 +839,7 @@
         .catch(function() {});
     }
     setInterval(fetchPiStats, 2000);
-    setTimeout(fetchPiStats, 2000);
+    setTimeout(fetchPiStats, 500);
 
     // ── Horaires par jour de semaine ─────────────────────────────────────────
     var JOURS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
