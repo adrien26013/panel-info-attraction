@@ -373,33 +373,47 @@
             modeEl.style.background = "#ffebee";
         }
 
-        // Bannière annonce en cours
+        // Volume sauvegardé
+        if (data.volume_ambiance !== undefined) {
+            const vol = data.volume_ambiance;
+            const slider = document.getElementById('volume-slider');
+            if (slider && Math.abs(parseInt(slider.value) - vol) > 2) slider.value = vol;
+        }
+
+        // Bannière annonce en temps réel
         const isAnnonce = (data.en_annonce === true);
-        document.getElementById('annonce-banner').style.display = isAnnonce ? 'block' : 'none';
+        const banner = document.getElementById('annonce-banner');
+        const bannerTitle = document.querySelector('#annonce-banner .banner-title');
+        banner.style.display = isAnnonce ? 'block' : 'none';
+
+        if (isAnnonce) {
+            // Afficher le type d'annonce
+            const typeMap = {
+                'Securite':  '🔴 ANNONCE SÉCURITÉ EN COURS / SAFETY ANNOUNCEMENT',
+                'Technique': '🔵 ANNONCE TECHNIQUE EN COURS / TECHNICAL ANNOUNCEMENT',
+                'Fermeture': '⚫ ANNONCE FERMETURE EN COURS / CLOSING ANNOUNCEMENT',
+            };
+            const typeLabel = typeMap[data.type_annonce] || '📢 DIFFUSION EN COURS / ANNOUNCEMENT PLAYING';
+            if (bannerTitle) bannerTitle.innerText = typeLabel;
+        }
+
         if (!isAnnonce) {
-            // Reset timeline quand l'annonce est terminée
             clearInterval(window._tlInterval);
+            window._tlInterval = null;
             document.getElementById('tl-progress').style.width = '0%';
             document.getElementById('tl-current').innerText = '0:00';
             document.getElementById('tl-total').innerText = '0:00';
         } else if (!window._tlInterval) {
-            // Démarrer la timeline si pas encore démarrée
             const startTime = Date.now();
-            const duration  = (data.annonce_duration || 120) * 1000; // durée en ms
-            const fmtTime = (ms) => {
-                const s = Math.floor(ms / 1000);
-                return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
-            };
-            document.getElementById('tl-total').innerText = fmtTime(duration);
-            window._tlInterval = setInterval(() => {
+            const duration  = (data.annonce_duration || 120) * 1000;
+            const fmtMs = (ms) => { const s = Math.floor(ms/1000); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); };
+            document.getElementById('tl-total').innerText = fmtMs(duration);
+            window._tlInterval = setInterval(function() {
                 const elapsed = Date.now() - startTime;
                 const pct = Math.min(100, (elapsed / duration) * 100);
                 document.getElementById('tl-progress').style.width = pct + '%';
-                document.getElementById('tl-current').innerText = fmtTime(elapsed);
-                if (elapsed >= duration) {
-                    clearInterval(window._tlInterval);
-                    window._tlInterval = null;
-                }
+                document.getElementById('tl-current').innerText = fmtMs(elapsed);
+                if (elapsed >= duration) { clearInterval(window._tlInterval); window._tlInterval = null; }
             }, 500);
         }
 
@@ -601,7 +615,11 @@
     };
 
     window.piCmd    = (action, extra = {}) => piSend({ action, ...extra }, null);
-    window.setVolume = (val) => piSend({ action: 'music_volume', volume: val / 100 }, null);
+    window.setVolume = (val) => {
+        piSend({ action: 'music_volume', volume: val / 100 }, null);
+        // Sauvegarder en Firebase pour mémoriser
+        update(dbRef, { volume_ambiance: parseInt(val) });
+    };
 
     window.seekTo = function(event) {
         const bar  = document.getElementById('seek-bar');
@@ -638,7 +656,7 @@
         }
         container.innerHTML = playlist.map((name, i) => `
             <div class="playlist-item ${i === currentIndex ? 'active' : ''}"
-                 onclick="selectTrack(${i}, '${name.replace(/'/g,"\'")}')">
+                 onclick="window.selectTrack(${i}, '${name.replace(/'/g,"\'")}')">
                 <span style="color:#999;font-size:11px;min-width:22px;">${i+1}</span>
                 <span class="track-name">${name}</span>
                 ${i === currentIndex ? '<span style="color:#005096;font-size:10px;margin-right:4px;">▶</span>' : ''}
@@ -647,16 +665,24 @@
         `).join('');
     };
 
-    const selectTrack = (index, name) => {
-        piSend({ action: 'music_play', index }, null);
+    window.selectTrack = function(index, name) {
+        piSend({ action: 'music_play', index: index }, null);
         const audio = document.getElementById('local-audio');
         const url = _playlistUrls[name];
+        console.log('[AUDIO] selectTrack', name, 'URL:', url ? url.substring(0,60)+'...' : 'MANQUANTE');
         if (url) {
-            if (audio.src !== url) audio.src = url;
+            if (audio.src !== url) {
+                audio.src = url;
+                audio.load();
+            }
             audio.currentTime = 0;
-            audio.play().catch(e => console.warn('[AUDIO]', e));
+            audio.play().then(function() {
+                console.log('[AUDIO] Lecture locale OK');
+            }).catch(function(e) {
+                console.error('[AUDIO] Erreur lecture:', e.message);
+            });
         } else {
-            console.warn('[AUDIO] URL manquante pour:', name, Object.keys(_playlistUrls));
+            console.warn('[AUDIO] URL manquante pour:', name, '- URLs dispo:', Object.keys(_playlistUrls));
         }
     };
 
@@ -815,7 +841,7 @@
         })
         .catch(function() {});
     }
-    setInterval(fetchPiStats, 5000);
+    setInterval(fetchPiStats, 2000);
     setTimeout(fetchPiStats, 2000);
 
     // ── Horaires par jour de semaine ─────────────────────────────────────────
