@@ -387,13 +387,12 @@
         banner.style.display = isAnnonce ? 'block' : 'none';
 
         if (isAnnonce) {
-            // Afficher le type d'annonce
-            const typeMap = {
-                'Securite':  '🔴 ANNONCE SÉCURITÉ EN COURS / SAFETY ANNOUNCEMENT',
+            var typeMap = {
+                'Securite':  '🔴 ANNONCE SECURITE EN COURS / SAFETY ANNOUNCEMENT',
                 'Technique': '🔵 ANNONCE TECHNIQUE EN COURS / TECHNICAL ANNOUNCEMENT',
                 'Fermeture': '⚫ ANNONCE FERMETURE EN COURS / CLOSING ANNOUNCEMENT',
             };
-            const typeLabel = typeMap[data.type_annonce] || '📢 DIFFUSION EN COURS / ANNOUNCEMENT PLAYING';
+            var typeLabel = typeMap[data.type_annonce] || '📢 DIFFUSION EN COURS / ANNOUNCEMENT PLAYING';
             if (bannerTitle) bannerTitle.innerText = typeLabel;
         }
 
@@ -403,14 +402,20 @@
             document.getElementById('tl-progress').style.width = '0%';
             document.getElementById('tl-current').innerText = '0:00';
             document.getElementById('tl-total').innerText = '0:00';
-        } else if (!window._tlInterval) {
-            const startTime = Date.now();
-            const duration  = (data.annonce_duration || 120) * 1000;
-            const fmtMs = (ms) => { const s = Math.floor(ms/1000); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); };
+        } else {
+            // Synchronisation basée sur annonce_start_ms écrit dans Firebase par le Pi
+            // Tous les panels calculent depuis le même timestamp → synchronisé
+            var startMs   = data.annonce_start_ms || Date.now();
+            var duration  = (data.annonce_duration || 120) * 1000;
+            var fmtMs = function(ms) {
+                var s = Math.max(0, Math.floor(ms/1000));
+                return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
+            };
             document.getElementById('tl-total').innerText = fmtMs(duration);
+            clearInterval(window._tlInterval);
             window._tlInterval = setInterval(function() {
-                const elapsed = Date.now() - startTime;
-                const pct = Math.min(100, (elapsed / duration) * 100);
+                var elapsed = Math.max(0, Date.now() - startMs);
+                var pct = Math.min(100, (elapsed / duration) * 100);
                 document.getElementById('tl-progress').style.width = pct + '%';
                 document.getElementById('tl-current').innerText = fmtMs(elapsed);
                 if (elapsed >= duration) { clearInterval(window._tlInterval); window._tlInterval = null; }
@@ -747,11 +752,21 @@
 
             renderPlaylist(s.playlist, s.current_index);
 
-            // Charger automatiquement le stream audio local si pas encore chargé
+            // Charger automatiquement depuis Firebase Storage (plus fiable que stream tunnel)
             var audio = document.getElementById('local-audio');
-            if (PI_CMD_URL && s.playlist && s.playlist.length > 0 && !audio.src.includes('/stream')) {
+            var trackUrl = _playlistUrls[s.current_name];
+            if (trackUrl && audio.getAttribute('data-loaded') !== s.current_name) {
+                audio.src = trackUrl;
+                audio.setAttribute('data-loaded', s.current_name);
+                audio.load();
+                console.log('[AUDIO] Auto-chargé:', s.current_name);
+            } else if (!trackUrl && PI_CMD_URL && s.playlist && s.playlist.length > 0
+                       && audio.getAttribute('data-loaded') !== 'stream-' + s.current_index) {
+                // Fallback stream Pi si pas d'URL Storage
                 audio.src = PI_CMD_URL + '/stream?index=' + s.current_index;
-                console.log('[AUDIO] Auto-chargé index', s.current_index);
+                audio.setAttribute('data-loaded', 'stream-' + s.current_index);
+                audio.load();
+                console.log('[AUDIO] Fallback stream index', s.current_index);
             }
         })
         .catch(function() {});
