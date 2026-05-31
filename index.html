@@ -746,6 +746,13 @@
             }
 
             renderPlaylist(s.playlist, s.current_index);
+
+            // Charger automatiquement le stream audio local si pas encore chargé
+            var audio = document.getElementById('local-audio');
+            if (PI_CMD_URL && s.playlist && s.playlist.length > 0 && !audio.src.includes('/stream')) {
+                audio.src = PI_CMD_URL + '/stream?index=' + s.current_index;
+                console.log('[AUDIO] Auto-chargé index', s.current_index);
+            }
         })
         .catch(function() {});
     }
@@ -812,20 +819,18 @@
     }, 5000);
 
     // ── Monitoring Pi ────────────────────────────────────────────────────────
+    // Valeurs Pi interpolées localement pour affichage fluide
+    var _piCpu = 0, _piRam = 0, _piTemp = 0;
+
     function fetchPiStats() {
         if (!PI_CMD_URL) return;
         fetch(PI_CMD_URL + '/pi_stats', { signal: AbortSignal.timeout(3000) })
         .then(function(r) { return r.json(); })
         .then(function(s) {
-            document.getElementById('pi-cpu').innerText  = s.cpu + '%';
-            document.getElementById('pi-ram').innerText  = s.ram + '%';
-            document.getElementById('pi-temp').innerText = s.temp + 'C';
+            _piCpu  = s.cpu  || 0;
+            _piRam  = s.ram  || 0;
+            _piTemp = s.temp || 0;
             document.getElementById('pi-uptime').innerText = 'Uptime: ' + s.uptime;
-            document.getElementById('pi-cpu-bar').style.width = s.cpu + '%';
-            document.getElementById('pi-ram-bar').style.width = s.ram + '%';
-            // Couleur température
-            var tempBar = document.getElementById('pi-temp');
-            tempBar.style.color = s.temp > 70 ? '#dc3545' : s.temp > 55 ? '#f39c12' : '#28a745';
             // Historique annonces
             var hist = document.getElementById('annonce-history');
             if (s.history && s.history.length > 0) {
@@ -834,11 +839,26 @@
                            '<span class="history-type">' + h.type + '</span>' +
                            '<span style="color:#999;font-size:11px;">' + h.date + '</span></div>';
                 }).join('');
+            } else {
+                document.getElementById('annonce-history').innerHTML =
+                    '<div style="padding:12px;color:#999;text-align:center;font-size:13px;">Aucune annonce</div>';
             }
         })
         .catch(function() {});
     }
-    setInterval(fetchPiStats, 2000);
+
+    // Mise à jour affichage monitoring toutes les 500ms (fluide)
+    setInterval(function() {
+        document.getElementById('pi-cpu').innerText  = _piCpu + '%';
+        document.getElementById('pi-ram').innerText  = _piRam + '%';
+        document.getElementById('pi-temp').innerText = _piTemp + 'C';
+        document.getElementById('pi-cpu-bar').style.width = _piCpu + '%';
+        document.getElementById('pi-ram-bar').style.width = _piRam + '%';
+        var tempEl = document.getElementById('pi-temp');
+        tempEl.style.color = _piTemp > 70 ? '#dc3545' : _piTemp > 55 ? '#f39c12' : '#28a745';
+    }, 500);
+
+    setInterval(fetchPiStats, 3000);
     setTimeout(fetchPiStats, 500);
 
     // ── Horaires par jour de semaine ─────────────────────────────────────────
