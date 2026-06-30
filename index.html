@@ -404,6 +404,8 @@
         if (data.intervalle_secu !== undefined) {
             _intervalleSecu = parseInt(data.intervalle_secu) || 600;
         }
+        // État ouvert/fermé pour le compte à rebours
+        _attractionOpen = (data.is_open === true);
         // Suivre l'état de l'annonce pour le compte à rebours
         _annonceEnCours  = (data.en_annonce === true);
         _annonceDuration = data.annonce_duration || 120;
@@ -677,6 +679,7 @@
     var _annonceEnCours  = false;
     var _annonceDuration = 0;
     var _annonceStartMs  = 0;
+    var _attractionOpen  = false;
 
     function updateCountdown() {
         var box = document.getElementById('countdown-value');
@@ -687,6 +690,13 @@
             box.innerText = 'DESACTIVE';
             box.style.color = '#dc3545';
             cdbox.style.background = '#fff5f5';
+            return;
+        }
+
+        if (!_attractionOpen) {
+            box.innerText = 'FERME';
+            box.style.color = '#999';
+            cdbox.style.background = '#f8fafc';
             return;
         }
 
