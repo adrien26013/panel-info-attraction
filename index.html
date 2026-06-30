@@ -405,6 +405,8 @@
             _countdownS      = data.countdown_s;
             _lastCountdownTs = Date.now();
         }
+        // Suivi annonce en cours pour le compte à rebours
+        _annonceEnCours = (data.en_annonce === true);
 
         // Bannière annonce en temps réel
         const isAnnonce = (data.en_annonce === true);
@@ -432,25 +434,27 @@
             var startMs  = data.annonce_start_ms || 0;
             var duration = (data.annonce_duration || 120) * 1000;
             var now      = Date.now();
-            var elapsed  = startMs > 0 ? Math.max(0, now - startMs) : 0;
-
-            // Si le timestamp est invalide (futur ou trop vieux) → on repart de 0
-            if (startMs <= 0 || elapsed > duration + 5000 || startMs > now) {
-                elapsed = 0;
-            }
 
             var fmtMs = function(ms) {
                 var s = Math.max(0, Math.floor(ms/1000));
                 return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
             };
-            document.getElementById('tl-total').innerText = fmtMs(duration);
+
+            // Calculer elapsed depuis le vrai timestamp de départ
+            var elapsed = 0;
+            if (startMs > 0 && startMs <= now && (now - startMs) <= duration + 10000) {
+                elapsed = now - startMs;
+            }
+
+            document.getElementById('tl-total').innerText   = fmtMs(duration);
             document.getElementById('tl-current').innerText = fmtMs(elapsed);
             document.getElementById('tl-progress').style.width = Math.min(100, (elapsed/duration)*100) + '%';
 
+            // Démarrer/reprendre le timer depuis la bonne position
             clearInterval(window._tlInterval);
-            var _startRef = now - elapsed;  // référence locale pour continuer depuis elapsed
+            var _startRef = now - elapsed;
             window._tlInterval = setInterval(function() {
-                var e = Math.max(0, Date.now() - _startRef);
+                var e   = Math.max(0, Date.now() - _startRef);
                 var pct = Math.min(100, (e / duration) * 100);
                 document.getElementById('tl-progress').style.width = pct + '%';
                 document.getElementById('tl-current').innerText = fmtMs(e);
@@ -665,9 +669,10 @@
     // ── Compte à rebours prochaine consigne ─────────────────────────────────
     // ── Compte à rebours — basé sur countdown_s envoyé par le Pi ────────────
     var _intervalleActif = true;
-    var _countdownS      = -1;    // valeur reçue depuis Firebase (-1 = désactivé)
-    var _countdownLocal  = -1;    // valeur interpolée localement
-    var _lastCountdownTs = 0;     // quand on a reçu la dernière valeur
+    var _countdownS      = -1;
+    var _countdownLocal  = -1;
+    var _lastCountdownTs = 0;
+    var _annonceEnCours  = false;
 
     function updateCountdown() {
         var box   = document.getElementById('countdown-value');
@@ -683,9 +688,9 @@
 
         if (_countdownS < 0) {
             // -1 = fermé ou annonce en cours
-            box.innerText = '--:--';
-            box.style.color = '#999';
-            cdbox.style.background = '#f0f3f8';
+            box.innerText = _annonceEnCours ? 'DIFFUSION' : '--:--';
+            box.style.color = _annonceEnCours ? '#e65c00' : '#999';
+            cdbox.style.background = _annonceEnCours ? '#fff3e0' : '#f0f3f8';
             return;
         }
 
