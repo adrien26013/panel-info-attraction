@@ -389,10 +389,9 @@
             if (slider && Math.abs(parseInt(slider.value) - vol) > 2) slider.value = vol;
         }
 
-        // Intervalle actif
+        // Intervalle actif — Firebase est la source de vérité (écrit par le panel via toggleIntervalle)
         if (data.intervalle_actif !== undefined) {
-            var recentlySet = window._intervalleLastSet && (Date.now() - window._intervalleLastSet < 30000);
-            if (!recentlySet) _intervalleActif = (data.intervalle_actif !== false);
+            _intervalleActif = (data.intervalle_actif !== false);
             var cb = document.getElementById('intervalle_actif');
             if (cb) cb.checked = _intervalleActif;
             var st = document.getElementById('intervalle_status');
