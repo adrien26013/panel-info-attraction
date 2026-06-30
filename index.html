@@ -404,12 +404,14 @@
         if (data.intervalle_secu !== undefined) {
             _intervalleSecu = parseInt(data.intervalle_secu) || 600;
         }
+        // Suivre l'état de l'annonce pour le compte à rebours
+        _annonceEnCours  = (data.en_annonce === true);
+        _annonceDuration = data.annonce_duration || 120;
+        _annonceStartMs  = data.annonce_start_ms || 0;
         // Lire dernière annonce depuis last_annonce_ms
         if (data.last_annonce_ms && data.last_annonce_ms > 0) {
-            // Seulement si la valeur Firebase est plus récente que ce qu'on a
             if (data.last_annonce_ms > _lastAnnonceTime) {
                 _lastAnnonceTime = data.last_annonce_ms;
-                updateCountdown();
             }
         }
 
@@ -669,26 +671,49 @@
 
     window.piCmd    = (action, extra = {}) => piSend({ action, ...extra }, null);
     // ── Compte à rebours prochaine consigne ─────────────────────────────────
-    var _lastAnnonceTime = Date.now();   // timestamp dernière annonce
-    var _intervalleSecu  = 600;          // intervalle en secondes (default 10min)
+    var _lastAnnonceTime = Date.now();
+    var _intervalleSecu  = 600;
     var _intervalleActif = true;
+    var _annonceEnCours  = false;
+    var _annonceDuration = 0;
+    var _annonceStartMs  = 0;
 
     function updateCountdown() {
         var box = document.getElementById('countdown-value');
+        var cdbox = document.getElementById('countdown-box');
         if (!box) return;
+
         if (!_intervalleActif) {
             box.innerText = 'DESACTIVE';
             box.style.color = '#dc3545';
-            document.getElementById('countdown-box').style.background = '#fff5f5';
+            cdbox.style.background = '#fff5f5';
             return;
         }
-        var elapsed  = (Date.now() - _lastAnnonceTime) / 1000;
+
+        // Si annonce en cours : le chrono va redémarrer à la fin de l'annonce
+        if (_annonceEnCours && _annonceStartMs > 0 && _annonceDuration > 0) {
+            var annonceElapsed = Date.now() - _annonceStartMs;
+            var annonceRemaining = Math.max(0, _annonceDuration * 1000 - annonceElapsed);
+            if (annonceRemaining > 0) {
+                // L'annonce tourne encore → chrono en attente
+                box.innerText = '--:--';
+                box.style.color = '#999';
+                cdbox.style.background = '#f0f3f8';
+                return;
+            } else {
+                // L'annonce vient de finir → remettre _lastAnnonceTime maintenant
+                _lastAnnonceTime = Date.now();
+                _annonceEnCours  = false;
+            }
+        }
+
+        var elapsed   = (Date.now() - _lastAnnonceTime) / 1000;
         var remaining = Math.max(0, _intervalleSecu - elapsed);
         var m = Math.floor(remaining / 60);
         var s = Math.floor(remaining % 60);
         box.innerText = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
         box.style.color = remaining < 30 ? '#dc3545' : remaining < 60 ? '#f39c12' : '#005096';
-        document.getElementById('countdown-box').style.background = remaining < 30 ? '#fff5f5' : '#f0f3f8';
+        cdbox.style.background = remaining < 30 ? '#fff5f5' : '#f0f3f8';
     }
     setInterval(updateCountdown, 1000);
 
