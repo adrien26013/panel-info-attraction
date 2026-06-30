@@ -578,10 +578,14 @@
         const total_secu      = (h * 3600) + (m * 60) + s;
         const capacite        = Number(document.getElementById('capacite').value || 0);
         const intervalle_calcul = Number(document.getElementById('int_calc').value || 7);
-        // Le Pi va recevoir le nouvel intervalle et renvoyer countdown_s dans 5s max
-        // On affiche --:-- en attendant
-        _countdownS = total_secu;
+        // Forcer la valeur locale et bloquer Firebase 20s
+        _countdownS      = total_secu;
         _lastCountdownTs = Date.now();
+        window._ignoreCountdown = true;
+        clearTimeout(window._ignoreCountdownTimer);
+        window._ignoreCountdownTimer = setTimeout(function() {
+            window._ignoreCountdown = false;
+        }, 20000);
         updateCountdown();
         // Sauvegarder immédiatement dans Firebase pour persister après annonce
         update(dbRef, { capacite, intervalle_secu: total_secu, intervalle_calcul });
