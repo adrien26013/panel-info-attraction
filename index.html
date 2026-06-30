@@ -400,9 +400,18 @@
                 st.style.color = _intervalleActif ? '#28a745' : '#dc3545';
             }
         }
-        // Intervalle sécurité (lecture seule depuis Firebase)
+        // Intervalle sécurité
         if (data.intervalle_secu !== undefined) {
             _intervalleSecu = parseInt(data.intervalle_secu) || 600;
+        }
+        // Au premier chargement : initialiser depuis countdown_s du Pi
+        if (!window._countdownInitialized && data.countdown_s !== undefined) {
+            window._countdownInitialized = true;
+            if (data.countdown_s >= 0) {
+                // Reculer _countdownStart pour refléter le temps déjà écoulé
+                var elapsed = _intervalleSecu - data.countdown_s;
+                _countdownStart = Date.now() - (elapsed * 1000);
+            }
         }
         // État attraction
         var wasOpen = _attractionOuverte;
