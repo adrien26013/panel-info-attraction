@@ -404,6 +404,11 @@
 
         // État attraction
         // Plus besoin de tracker wasOpen — le Pi gère countdown_s
+        // Countdown depuis Firebase — source unique de vérité
+        if (data.countdown_s !== undefined) {
+            _cdRemaining  = data.countdown_s;
+            _cdReceivedAt = Date.now();
+        }
         // Annonce en cours
         _annonceEnCours = (data.en_annonce === true);
 
