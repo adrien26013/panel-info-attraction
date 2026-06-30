@@ -389,23 +389,17 @@
             if (slider && Math.abs(parseInt(slider.value) - vol) > 2) slider.value = vol;
         }
 
-        // Intervalle actif — ne pas écraser si modifié manuellement il y a moins de 30s
+        // Intervalle actif
         if (data.intervalle_actif !== undefined) {
             var recentlySet = window._intervalleLastSet && (Date.now() - window._intervalleLastSet < 30000);
-            if (!recentlySet) {
-                _intervalleActif = (data.intervalle_actif !== false);
-                var cb = document.getElementById('intervalle_actif');
-                if (cb) cb.checked = _intervalleActif;
-                var st = document.getElementById('intervalle_status');
-                if (st) {
-                    st.innerText = _intervalleActif ? 'Actif' : 'Desactive';
-                    st.style.color = _intervalleActif ? '#28a745' : '#dc3545';
-                }
+            if (!recentlySet) _intervalleActif = (data.intervalle_actif !== false);
+            var cb = document.getElementById('intervalle_actif');
+            if (cb) cb.checked = _intervalleActif;
+            var st = document.getElementById('intervalle_status');
+            if (st) {
+                st.innerText = _intervalleActif ? 'Actif' : 'Desactive';
+                st.style.color = _intervalleActif ? '#28a745' : '#dc3545';
             }
-        }
-        // Intervalle sécurité — toujours mis à jour EN PREMIER
-        if (data.intervalle_secu !== undefined) {
-            _intervalleSecu = parseInt(data.intervalle_secu) || 600;
         }
         // Initialiser depuis countdown_s Firebase — APRÈS _intervalleSecu
         // countdown_s = secondes restantes calculées par le Pi
@@ -675,55 +669,44 @@
 
     window.piCmd    = (action, extra = {}) => piSend({ action, ...extra }, null);
     // ── Compte à rebours prochaine consigne ─────────────────────────────────
-    // ── Compte à rebours 100% local ─────────────────────────────────────────
-    var _intervalleActif  = true;
-    var _intervalleSecu   = 600;       // valeur en secondes
-    var _countdownStart   = Date.now(); // quand le compteur a démarré
-    var _annonceEnCours   = false;
-    var _attractionOuverte = false;
+    // ── Compte à rebours — source unique : countdown_s Firebase ─────────────
+    var _intervalleActif = true;
+    var _annonceEnCours  = false;
+    var _cdRemaining     = -1;   // secondes restantes reçues depuis Firebase
+    var _cdReceivedAt    = 0;    // Date.now() quand on a reçu la valeur
 
-    function updateCountdown() {
+    function fmtCD(s) {
+        s = Math.max(0, Math.floor(s));
+        return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
+    }
+
+    // Interpolation : afficher la valeur courante entre deux updates Firebase
+    setInterval(function() {
         var box   = document.getElementById('countdown-value');
         var cdbox = document.getElementById('countdown-box');
         if (!box) return;
 
         if (!_intervalleActif) {
-            box.innerText = 'DESACTIVE';
-            box.style.color = '#dc3545';
-            cdbox.style.background = '#fff5f5';
-            return;
-        }
-        if (!_attractionOuverte) {
-            box.innerText = '--:--';
-            box.style.color = '#999';
-            cdbox.style.background = '#f0f3f8';
-            return;
+            box.innerText = 'DESACTIVE'; box.style.color = '#dc3545';
+            cdbox.style.background = '#fff5f5'; return;
         }
         if (_annonceEnCours) {
-            box.innerText = 'DIFFUSION';
-            box.style.color = '#e65c00';
-            cdbox.style.background = '#fff3e0';
-            return;
+            box.innerText = 'DIFFUSION'; box.style.color = '#e65c00';
+            cdbox.style.background = '#fff3e0'; return;
         }
-
-        var elapsed   = (Date.now() - _countdownStart) / 1000;
-        var remaining = Math.max(0, _intervalleSecu - elapsed);
-        var m = Math.floor(remaining / 60);
-        var s = Math.floor(remaining % 60);
-        box.innerText = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+        if (_cdRemaining < 0) {
+            box.innerText = '--:--'; box.style.color = '#999';
+            cdbox.style.background = '#f0f3f8'; return;
+        }
+        // Interpoler depuis la dernière valeur reçue
+        var sinceReceived = (Date.now() - _cdReceivedAt) / 1000;
+        var remaining = Math.max(0, _cdRemaining - sinceReceived);
+        box.innerText = fmtCD(remaining);
         box.style.color = remaining < 30 ? '#dc3545' : remaining < 60 ? '#f39c12' : '#005096';
         cdbox.style.background = remaining < 30 ? '#fff5f5' : '#f0f3f8';
-    }
-    setInterval(updateCountdown, 1000);
+    }, 500);
 
-    // Remettre le compteur à zéro et sauvegarder en sessionStorage
-    function resetCountdown() {
-        _countdownStart = Date.now();
-        try { localStorage.setItem('drakkar_cdStart', _countdownStart); localStorage.setItem('drakkar_cdInterval', _intervalleSecu); } catch(e) {}
-        updateCountdown();
-    }
-
-    // Pas de restauration locale — on se base sur countdown_s Firebase au 1er chargement
+    function resetCountdown() {} // no-op : c'est le Pi qui est maître
 
     window.toggleIntervalle = function(checked) {
         _intervalleActif = checked;
