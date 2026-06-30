@@ -403,15 +403,28 @@
                 }
             }
         }
-        // Intervalle sécurité
+        // Intervalle sécurité — toujours mis à jour EN PREMIER
         if (data.intervalle_secu !== undefined) {
             _intervalleSecu = parseInt(data.intervalle_secu) || 600;
         }
-        // Initialiser depuis countdown_s Firebase au premier chargement
-        if (!window._countdownInitialized && data.countdown_s !== undefined && data.countdown_s >= 0) {
-            window._countdownInitialized = true;
-            // Calculer _countdownStart pour que le compteur affiche countdown_s restantes
-            _countdownStart = Date.now() - ((_intervalleSecu - data.countdown_s) * 1000);
+        // Initialiser depuis countdown_s Firebase — APRÈS _intervalleSecu
+        // countdown_s = secondes restantes calculées par le Pi
+        if (data.countdown_s !== undefined && data.countdown_s >= 0) {
+            if (!window._countdownInitialized) {
+                // Premier chargement : positionner le compteur au bon endroit
+                window._countdownInitialized = true;
+                _countdownStart = Date.now() - ((_intervalleSecu - data.countdown_s) * 1000);
+            }
+            // Resynchronisation légère toutes les 30s si décalage > 10s
+            else if (!window._lastResync || (Date.now() - window._lastResync) > 30000) {
+                window._lastResync = Date.now();
+                var localRemaining = _intervalleSecu - (Date.now() - _countdownStart) / 1000;
+                var diff = Math.abs(localRemaining - data.countdown_s);
+                if (diff > 10) {
+                    // Décalage trop grand → resync silencieuse
+                    _countdownStart = Date.now() - ((_intervalleSecu - data.countdown_s) * 1000);
+                }
+            }
         }
         // État attraction
         var wasOpen = _attractionOuverte;
