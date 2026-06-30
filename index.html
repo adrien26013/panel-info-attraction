@@ -389,7 +389,7 @@
             if (slider && Math.abs(parseInt(slider.value) - vol) > 2) slider.value = vol;
         }
 
-        // Intervalle actif + compte à rebours
+        // Intervalle actif
         if (data.intervalle_actif !== undefined) {
             _intervalleActif = (data.intervalle_actif !== false);
             var cb = document.getElementById('intervalle_actif');
@@ -400,21 +400,10 @@
                 st.style.color = _intervalleActif ? '#28a745' : '#dc3545';
             }
         }
-        // Lire intervalle_secu depuis Firebase
-        if (data.intervalle_secu !== undefined) {
-            _intervalleSecu = parseInt(data.intervalle_secu) || 600;
-        }
-        // État ouvert/fermé pour le compte à rebours
-        _attractionOpen = (data.is_open === true);
-        // Suivre l'état de l'annonce pour le compte à rebours
-        _annonceEnCours  = (data.en_annonce === true);
-        _annonceDuration = data.annonce_duration || 120;
-        _annonceStartMs  = data.annonce_start_ms || 0;
-        // Lire dernière annonce depuis last_annonce_ms
-        if (data.last_annonce_ms && data.last_annonce_ms > 0) {
-            if (data.last_annonce_ms > _lastAnnonceTime) {
-                _lastAnnonceTime = data.last_annonce_ms;
-            }
+        // Compte à rebours depuis le Pi
+        if (data.countdown_s !== undefined) {
+            _countdownS      = data.countdown_s;
+            _lastCountdownTs = Date.now();
         }
 
         // Bannière annonce en temps réel
@@ -592,9 +581,10 @@
         const total_secu      = (h * 3600) + (m * 60) + s;
         const capacite        = Number(document.getElementById('capacite').value || 0);
         const intervalle_calcul = Number(document.getElementById('int_calc').value || 7);
-        // Mettre à jour localement → compte à rebours repart immédiatement
-        _intervalleSecu  = total_secu;
-        _lastAnnonceTime = Date.now();   // repart de maintenant
+        // Le Pi va recevoir le nouvel intervalle et renvoyer countdown_s dans 5s max
+        // On affiche --:-- en attendant
+        _countdownS = total_secu;
+        _lastCountdownTs = Date.now();
         updateCountdown();
         // Sauvegarder immédiatement dans Firebase pour persister après annonce
         update(dbRef, { capacite, intervalle_secu: total_secu, intervalle_calcul });
@@ -673,16 +663,14 @@
 
     window.piCmd    = (action, extra = {}) => piSend({ action, ...extra }, null);
     // ── Compte à rebours prochaine consigne ─────────────────────────────────
-    var _lastAnnonceTime = Date.now();
-    var _intervalleSecu  = 600;
+    // ── Compte à rebours — basé sur countdown_s envoyé par le Pi ────────────
     var _intervalleActif = true;
-    var _annonceEnCours  = false;
-    var _annonceDuration = 0;
-    var _annonceStartMs  = 0;
-    var _attractionOpen  = false;
+    var _countdownS      = -1;    // valeur reçue depuis Firebase (-1 = désactivé)
+    var _countdownLocal  = -1;    // valeur interpolée localement
+    var _lastCountdownTs = 0;     // quand on a reçu la dernière valeur
 
     function updateCountdown() {
-        var box = document.getElementById('countdown-value');
+        var box   = document.getElementById('countdown-value');
         var cdbox = document.getElementById('countdown-box');
         if (!box) return;
 
@@ -693,32 +681,17 @@
             return;
         }
 
-        if (!_attractionOpen) {
-            box.innerText = 'FERME';
+        if (_countdownS < 0) {
+            // -1 = fermé ou annonce en cours
+            box.innerText = '--:--';
             box.style.color = '#999';
-            cdbox.style.background = '#f8fafc';
+            cdbox.style.background = '#f0f3f8';
             return;
         }
 
-        // Si annonce en cours : le chrono va redémarrer à la fin de l'annonce
-        if (_annonceEnCours && _annonceStartMs > 0 && _annonceDuration > 0) {
-            var annonceElapsed = Date.now() - _annonceStartMs;
-            var annonceRemaining = Math.max(0, _annonceDuration * 1000 - annonceElapsed);
-            if (annonceRemaining > 0) {
-                // L'annonce tourne encore → chrono en attente
-                box.innerText = '--:--';
-                box.style.color = '#999';
-                cdbox.style.background = '#f0f3f8';
-                return;
-            } else {
-                // L'annonce vient de finir → remettre _lastAnnonceTime maintenant
-                _lastAnnonceTime = Date.now();
-                _annonceEnCours  = false;
-            }
-        }
-
-        var elapsed   = (Date.now() - _lastAnnonceTime) / 1000;
-        var remaining = Math.max(0, _intervalleSecu - elapsed);
+        // Interpolation locale : décrémenter depuis la dernière valeur reçue
+        var sinceLastUpdate = (Date.now() - _lastCountdownTs) / 1000;
+        var remaining = Math.max(0, _countdownS - sinceLastUpdate);
         var m = Math.floor(remaining / 60);
         var s = Math.floor(remaining % 60);
         box.innerText = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
