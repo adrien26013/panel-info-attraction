@@ -427,38 +427,29 @@
         if (!isAnnonce) {
             clearInterval(window._tlInterval);
             window._tlInterval = null;
+            window._annonceWasActive = false;
             document.getElementById('tl-progress').style.width = '0%';
             document.getElementById('tl-current').innerText = '0:00';
             document.getElementById('tl-total').innerText = '0:00';
-        } else {
-            var startMs  = data.annonce_start_ms || 0;
+        } else if (!window._annonceWasActive) {
+            // Nouvelle annonce → démarrer depuis 0 immédiatement
+            window._annonceWasActive = true;
             var duration = (data.annonce_duration || 120) * 1000;
-            var now      = Date.now();
-
             var fmtMs = function(ms) {
                 var s = Math.max(0, Math.floor(ms/1000));
                 return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
             };
-
-            // Calculer elapsed depuis le vrai timestamp de départ
-            var elapsed = 0;
-            if (startMs > 0 && startMs <= now && (now - startMs) <= duration + 10000) {
-                elapsed = now - startMs;
-            }
-
             document.getElementById('tl-total').innerText   = fmtMs(duration);
-            document.getElementById('tl-current').innerText = fmtMs(elapsed);
-            document.getElementById('tl-progress').style.width = Math.min(100, (elapsed/duration)*100) + '%';
-
-            // Démarrer/reprendre le timer depuis la bonne position
+            document.getElementById('tl-current').innerText = '0:00';
+            document.getElementById('tl-progress').style.width = '0%';
             clearInterval(window._tlInterval);
-            var _startRef = now - elapsed;
+            var _tlStart = Date.now();
             window._tlInterval = setInterval(function() {
-                var e   = Math.max(0, Date.now() - _startRef);
-                var pct = Math.min(100, (e / duration) * 100);
+                var elapsed = Date.now() - _tlStart;
+                var pct = Math.min(100, (elapsed / duration) * 100);
                 document.getElementById('tl-progress').style.width = pct + '%';
-                document.getElementById('tl-current').innerText = fmtMs(e);
-                if (e >= duration) { clearInterval(window._tlInterval); window._tlInterval = null; }
+                document.getElementById('tl-current').innerText = fmtMs(elapsed);
+                if (elapsed >= duration) { clearInterval(window._tlInterval); window._tlInterval = null; }
             }, 500);
         }
 
