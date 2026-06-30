@@ -404,9 +404,13 @@
         if (data.intervalle_secu !== undefined) {
             _intervalleSecu = parseInt(data.intervalle_secu) || 600;
         }
-        // Lire dernière annonce depuis last_annonce_ms (mis à jour par le Pi toutes les 10s)
+        // Lire dernière annonce depuis last_annonce_ms
         if (data.last_annonce_ms && data.last_annonce_ms > 0) {
-            _lastAnnonceTime = data.last_annonce_ms;
+            // Seulement si la valeur Firebase est plus récente que ce qu'on a
+            if (data.last_annonce_ms > _lastAnnonceTime) {
+                _lastAnnonceTime = data.last_annonce_ms;
+                updateCountdown();
+            }
         }
 
         // Bannière annonce en temps réel
