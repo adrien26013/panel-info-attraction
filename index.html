@@ -412,13 +412,9 @@
             // Pas de resync automatique — le panel est maître après initialisation
         }
         // État attraction
-        var wasOpen = _attractionOuverte;
-        _attractionOuverte = (data.is_open === true) || (data.force_open_panel === true);
-        if (!wasOpen && _attractionOuverte) resetCountdown();
+        // Plus besoin de tracker wasOpen — le Pi gère countdown_s
         // Annonce en cours
-        var wasAnnonce = _annonceEnCours;
         _annonceEnCours = (data.en_annonce === true);
-        if (wasAnnonce && !_annonceEnCours) resetCountdown();
 
         // Bannière annonce en temps réel
         const isAnnonce = (data.en_annonce === true);
