@@ -415,16 +415,7 @@
                 window._countdownInitialized = true;
                 _countdownStart = Date.now() - ((_intervalleSecu - data.countdown_s) * 1000);
             }
-            // Resynchronisation légère toutes les 30s si décalage > 10s
-            else if (!window._lastResync || (Date.now() - window._lastResync) > 30000) {
-                window._lastResync = Date.now();
-                var localRemaining = _intervalleSecu - (Date.now() - _countdownStart) / 1000;
-                var diff = Math.abs(localRemaining - data.countdown_s);
-                if (diff > 10) {
-                    // Décalage trop grand → resync silencieuse
-                    _countdownStart = Date.now() - ((_intervalleSecu - data.countdown_s) * 1000);
-                }
-            }
+            // Pas de resync automatique — le panel est maître après initialisation
         }
         // État attraction
         var wasOpen = _attractionOuverte;
