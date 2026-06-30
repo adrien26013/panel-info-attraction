@@ -407,14 +407,11 @@
         if (data.intervalle_secu !== undefined) {
             _intervalleSecu = parseInt(data.intervalle_secu) || 600;
         }
-        // Au premier chargement : initialiser depuis countdown_s du Pi
-        if (!window._countdownInitialized && data.countdown_s !== undefined) {
+        // Initialiser depuis countdown_s Firebase au premier chargement
+        if (!window._countdownInitialized && data.countdown_s !== undefined && data.countdown_s >= 0) {
             window._countdownInitialized = true;
-            if (data.countdown_s >= 0) {
-                // Reculer _countdownStart pour refléter le temps déjà écoulé
-                var elapsed = _intervalleSecu - data.countdown_s;
-                _countdownStart = Date.now() - (elapsed * 1000);
-            }
+            // Calculer _countdownStart pour que le compteur affiche countdown_s restantes
+            _countdownStart = Date.now() - ((_intervalleSecu - data.countdown_s) * 1000);
         }
         // État attraction
         var wasOpen = _attractionOuverte;
@@ -718,24 +715,11 @@
     // Remettre le compteur à zéro et sauvegarder en sessionStorage
     function resetCountdown() {
         _countdownStart = Date.now();
-        try { sessionStorage.setItem('cdStart', _countdownStart); sessionStorage.setItem('cdInterval', _intervalleSecu); } catch(e) {}
+        try { localStorage.setItem('drakkar_cdStart', _countdownStart); localStorage.setItem('drakkar_cdInterval', _intervalleSecu); } catch(e) {}
         updateCountdown();
     }
 
-    // Restaurer depuis sessionStorage au chargement
-    try {
-        var savedStart    = parseInt(sessionStorage.getItem('cdStart') || '0');
-        var savedInterval = parseInt(sessionStorage.getItem('cdInterval') || '0');
-        if (savedStart > 0 && savedInterval > 0) {
-            var age = (Date.now() - savedStart) / 1000;
-            if (age < savedInterval) {
-                // Le compteur n'est pas encore expiré → reprendre depuis là où on était
-                _intervalleSecu = savedInterval;
-                _countdownStart = savedStart;
-                window._countdownInitialized = true;
-            }
-        }
-    } catch(e) {}
+    // Pas de restauration locale — on se base sur countdown_s Firebase au 1er chargement
 
     window.toggleIntervalle = function(checked) {
         _intervalleActif = checked;
