@@ -582,7 +582,10 @@
         const total_secu      = (h * 3600) + (m * 60) + s;
         const capacite        = Number(document.getElementById('capacite').value || 0);
         const intervalle_calcul = Number(document.getElementById('int_calc').value || 7);
-        // Sauvegarder immédiatement dans Firebase — le Pi renverra countdown_s dans 3s
+        // Mise à jour locale immédiate du countdown en attendant la réponse du Pi
+        _cdRemaining  = total_secu;
+        _cdReceivedAt = Date.now();
+        // Sauvegarder dans Firebase
         update(dbRef, { capacite, intervalle_secu: total_secu, intervalle_calcul });
         piSend(
             { action: 'params', capacite, intervalle_secu: total_secu, intervalle_calcul },
