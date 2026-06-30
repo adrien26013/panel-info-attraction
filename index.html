@@ -401,16 +401,7 @@
                 st.style.color = _intervalleActif ? '#28a745' : '#dc3545';
             }
         }
-        // Initialiser depuis countdown_s Firebase — APRÈS _intervalleSecu
-        // countdown_s = secondes restantes calculées par le Pi
-        if (data.countdown_s !== undefined && data.countdown_s >= 0) {
-            if (!window._countdownInitialized) {
-                // Premier chargement : positionner le compteur au bon endroit
-                window._countdownInitialized = true;
-                _countdownStart = Date.now() - ((_intervalleSecu - data.countdown_s) * 1000);
-            }
-            // Pas de resync automatique — le panel est maître après initialisation
-        }
+
         // État attraction
         // Plus besoin de tracker wasOpen — le Pi gère countdown_s
         // Annonce en cours
@@ -586,9 +577,7 @@
         const total_secu      = (h * 3600) + (m * 60) + s;
         const capacite        = Number(document.getElementById('capacite').value || 0);
         const intervalle_calcul = Number(document.getElementById('int_calc').value || 7);
-        _intervalleSecu = total_secu;
-        resetCountdown();  // resetCountdown sauvegarde en sessionStorage
-        // Sauvegarder immédiatement dans Firebase pour persister après annonce
+        // Sauvegarder immédiatement dans Firebase — le Pi renverra countdown_s dans 3s
         update(dbRef, { capacite, intervalle_secu: total_secu, intervalle_calcul });
         piSend(
             { action: 'params', capacite, intervalle_secu: total_secu, intervalle_calcul },
@@ -711,8 +700,7 @@
         update(dbRef, { intervalle_actif: checked });
         var st = document.getElementById('intervalle_status');
         if (st) { st.innerText = checked ? 'Actif' : 'Desactive'; st.style.color = checked ? '#28a745' : '#dc3545'; }
-        if (checked) resetCountdown();
-        updateCountdown();
+
     };
 
     window.setVolume = (val) => {
