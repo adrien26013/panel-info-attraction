@@ -400,13 +400,18 @@
                 st.style.color = _intervalleActif ? '#28a745' : '#dc3545';
             }
         }
-        // Compte à rebours depuis le Pi
-        if (data.countdown_s !== undefined) {
-            _countdownS      = data.countdown_s;
-            _lastCountdownTs = Date.now();
+        // Intervalle sécurité (lecture seule depuis Firebase)
+        if (data.intervalle_secu !== undefined) {
+            _intervalleSecu = parseInt(data.intervalle_secu) || 600;
         }
-        // Suivi annonce en cours pour le compte à rebours
+        // État attraction
+        var wasOpen = _attractionOuverte;
+        _attractionOuverte = (data.is_open === true) || (data.force_open_panel === true);
+        if (!wasOpen && _attractionOuverte) resetCountdown();
+        // Annonce en cours
+        var wasAnnonce = _annonceEnCours;
         _annonceEnCours = (data.en_annonce === true);
+        if (wasAnnonce && !_annonceEnCours) resetCountdown();
 
         // Bannière annonce en temps réel
         const isAnnonce = (data.en_annonce === true);
@@ -578,15 +583,8 @@
         const total_secu      = (h * 3600) + (m * 60) + s;
         const capacite        = Number(document.getElementById('capacite').value || 0);
         const intervalle_calcul = Number(document.getElementById('int_calc').value || 7);
-        // Forcer la valeur locale et bloquer Firebase 20s
-        _countdownS      = total_secu;
-        _lastCountdownTs = Date.now();
-        window._ignoreCountdown = true;
-        clearTimeout(window._ignoreCountdownTimer);
-        window._ignoreCountdownTimer = setTimeout(function() {
-            window._ignoreCountdown = false;
-        }, 20000);
-        updateCountdown();
+        _intervalleSecu = total_secu;
+        resetCountdown();
         // Sauvegarder immédiatement dans Firebase pour persister après annonce
         update(dbRef, { capacite, intervalle_secu: total_secu, intervalle_calcul });
         piSend(
@@ -664,12 +662,12 @@
 
     window.piCmd    = (action, extra = {}) => piSend({ action, ...extra }, null);
     // ── Compte à rebours prochaine consigne ─────────────────────────────────
-    // ── Compte à rebours — basé sur countdown_s envoyé par le Pi ────────────
-    var _intervalleActif = true;
-    var _countdownS      = -1;
-    var _countdownLocal  = -1;
-    var _lastCountdownTs = 0;
-    var _annonceEnCours  = false;
+    // ── Compte à rebours 100% local ─────────────────────────────────────────
+    var _intervalleActif  = true;
+    var _intervalleSecu   = 600;       // valeur en secondes
+    var _countdownStart   = Date.now(); // quand le compteur a démarré
+    var _annonceEnCours   = false;
+    var _attractionOuverte = false;
 
     function updateCountdown() {
         var box   = document.getElementById('countdown-value');
@@ -682,18 +680,21 @@
             cdbox.style.background = '#fff5f5';
             return;
         }
-
-        if (_countdownS < 0) {
-            // -1 = fermé ou annonce en cours
-            box.innerText = _annonceEnCours ? 'DIFFUSION' : '--:--';
-            box.style.color = _annonceEnCours ? '#e65c00' : '#999';
-            cdbox.style.background = _annonceEnCours ? '#fff3e0' : '#f0f3f8';
+        if (!_attractionOuverte) {
+            box.innerText = '--:--';
+            box.style.color = '#999';
+            cdbox.style.background = '#f0f3f8';
+            return;
+        }
+        if (_annonceEnCours) {
+            box.innerText = 'DIFFUSION';
+            box.style.color = '#e65c00';
+            cdbox.style.background = '#fff3e0';
             return;
         }
 
-        // Interpolation locale : décrémenter depuis la dernière valeur reçue
-        var sinceLastUpdate = (Date.now() - _lastCountdownTs) / 1000;
-        var remaining = Math.max(0, _countdownS - sinceLastUpdate);
+        var elapsed   = (Date.now() - _countdownStart) / 1000;
+        var remaining = Math.max(0, _intervalleSecu - elapsed);
         var m = Math.floor(remaining / 60);
         var s = Math.floor(remaining % 60);
         box.innerText = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
@@ -702,12 +703,19 @@
     }
     setInterval(updateCountdown, 1000);
 
+    // Remettre le compteur à zéro
+    function resetCountdown() {
+        _countdownStart = Date.now();
+        updateCountdown();
+    }
+
     window.toggleIntervalle = function(checked) {
         _intervalleActif = checked;
         piSend({ action: 'params', intervalle_actif: checked }, null);
         update(dbRef, { intervalle_actif: checked });
         var st = document.getElementById('intervalle_status');
         if (st) { st.innerText = checked ? 'Actif' : 'Desactive'; st.style.color = checked ? '#28a745' : '#dc3545'; }
+        if (checked) resetCountdown();
         updateCountdown();
     };
 
