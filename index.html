@@ -584,6 +584,10 @@
         const total_secu      = (h * 3600) + (m * 60) + s;
         const capacite        = Number(document.getElementById('capacite').value || 0);
         const intervalle_calcul = Number(document.getElementById('int_calc').value || 7);
+        // Mettre à jour localement immédiatement → compte à rebours se remet à jour
+        _intervalleSecu  = total_secu;
+        _lastAnnonceTime = Date.now();  // repart de maintenant
+        updateCountdown();
         piSend(
             { action: 'params', capacite, intervalle_secu: total_secu, intervalle_calcul },
             () => update(dbRef, { capacite, intervalle_secu: total_secu, intervalle_calcul })
