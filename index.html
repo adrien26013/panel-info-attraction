@@ -588,10 +588,11 @@
         _intervalleSecu  = total_secu;
         _lastAnnonceTime = Date.now();  // repart de maintenant
         updateCountdown();
+        // Sauvegarder immédiatement dans Firebase pour persister après annonce
+        update(dbRef, { capacite, intervalle_secu: total_secu, intervalle_calcul });
         piSend(
             { action: 'params', capacite, intervalle_secu: total_secu, intervalle_calcul },
-            () => update(dbRef, { capacite, intervalle_secu: total_secu, intervalle_calcul })
-                  .then(() => showSuccess())
+            () => showSuccess()
         );
     };
 
