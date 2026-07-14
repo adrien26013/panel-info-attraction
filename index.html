@@ -129,14 +129,14 @@
 
             <div style="font-size:12px; color:#555; margin-top:8px;">Intervalle de calcul de l'attente (secondes)</div>
             <input type="number"
-                   id="int_calc"
+                   id="int_calc" oninput="window._intCalcLastModified=Date.now()"
                    placeholder="Ex: 10">
 
             <div style="font-size:12px; color:#555; margin-top:8px;">Intervalle entre annonces sécurité (hh:mm:ss)</div>
             <div style="display:flex; gap:5px;">
-                <input type="number" id="secu_h" placeholder="Heures">
-                <input type="number" id="secu_m" placeholder="Minutes">
-                <input type="number" id="secu_s" placeholder="Secondes">
+                <input type="number" id="secu_h" placeholder="Heures" oninput="window._secuLastModified=Date.now()">
+                <input type="number" id="secu_m" placeholder="Minutes" oninput="window._secuLastModified=Date.now()">
+                <input type="number" id="secu_s" placeholder="Secondes" oninput="window._secuLastModified=Date.now()">
             </div>
             <div style="display:flex; align-items:center; gap:10px; margin-top:8px; padding:8px; background:#f8fafc; border-radius:8px;">
                 <input type="checkbox" id="intervalle_actif" style="width:auto; margin:0;" onchange="toggleIntervalle(this.checked)">
@@ -212,11 +212,11 @@
             </div>
 
             <input type="text"
-                   id="info_message"
+                   id="info_message" oninput="window._msgLastModified=Date.now()"
                    placeholder="Page 1 | Page 2 | Page 3">
 
             <input type="number"
-                   id="page_duration"
+                   id="page_duration" oninput="window._pageDurLastModified=Date.now()"
                    placeholder="Temps par page (secondes)">
 
             <button class="btn-update"
@@ -278,11 +278,11 @@
             <div style="display:flex; gap:5px; margin-bottom:8px;">
                 <div style="flex:1;">
                     <div style="font-size:11px; color:#999; margin-bottom:2px;">Ouverture</div>
-                    <input type="time" id="h_ouv" style="width:100%;">
+                    <input type="time" id="h_ouv" style="width:100%;" oninput="window._horaireLastModified=Date.now()">
                 </div>
                 <div style="flex:1;">
                     <div style="font-size:11px; color:#999; margin-bottom:2px;">Fermeture</div>
-                    <input type="time" id="h_ferm" style="width:100%;">
+                    <input type="time" id="h_ferm" style="width:100%;" oninput="window._horaireLastModified=Date.now()">
                 </div>
             </div>
             <div style="font-size:11px; color:#999; margin-bottom:8px;">Cliquez sur les jours pour les sélectionner (vide = tous les jours)</div>
@@ -359,6 +359,7 @@
         const data = snapshot.val();
         if (!data) return;
 
+        // ── Mode & Forçage (lecture seule, pas de saisie utilisateur) ─────────
         const modeEl = document.getElementById('status_mode');
         const isOpen  = data.is_open === true;
         if (data.force_open_panel) {
@@ -382,14 +383,26 @@
             modeEl.style.background = "#ffebee";
         }
 
-        // Volume sauvegardé
-        if (data.volume_ambiance !== undefined) {
+        // ── Helper : est-ce que l'utilisateur est en train de modifier ce champ ? ──
+        const focused = document.activeElement ? document.activeElement.id : '';
+        function fieldFocused(...ids) {
+            return ids.includes(focused);
+        }
+        function recentlyModified(flag, delay) {
+            delay = delay || 30000;
+            return window[flag] && (Date.now() - window[flag] < delay);
+        }
+
+        // ── Champs modifiables — protégés si focus ou modification récente ────
+
+        // Volume (pas de saisie clavier, juste slider)
+        if (data.volume_ambiance !== undefined && !fieldFocused('volume-slider')) {
             const vol = data.volume_ambiance;
             const slider = document.getElementById('volume-slider');
             if (slider && Math.abs(parseInt(slider.value) - vol) > 2) slider.value = vol;
         }
 
-        // Intervalle actif — Firebase est la source de vérité (écrit par le panel via toggleIntervalle)
+        // Intervalle actif
         if (data.intervalle_actif !== undefined) {
             _intervalleActif = (data.intervalle_actif !== false);
             var cb = document.getElementById('intervalle_actif');
@@ -401,17 +414,51 @@
             }
         }
 
-        // État attraction
-        // Plus besoin de tracker wasOpen — le Pi gère countdown_s
-        // Countdown depuis Firebase — source unique de vérité
+        // Intervalle sécurité H/M/S
+        if (data.intervalle_secu !== undefined && !fieldFocused('secu_h','secu_m','secu_s') && !recentlyModified('_secuLastModified')) {
+            const total = parseInt(data.intervalle_secu) || 0;
+            document.getElementById('secu_h').value = Math.floor(total / 3600);
+            document.getElementById('secu_m').value = Math.floor((total % 3600) / 60);
+            document.getElementById('secu_s').value = total % 60;
+        }
+
+        // Intervalle calcul
+        if (data.intervalle_calcul !== undefined && !fieldFocused('int_calc') && !recentlyModified('_intCalcLastModified')) {
+            document.getElementById('int_calc').value = data.intervalle_calcul;
+        }
+
+        // Message défilant
+        if (data.info_message !== undefined && !fieldFocused('info_message') && !recentlyModified('_msgLastModified')) {
+            document.getElementById('info_message').value = data.info_message;
+        }
+
+        // Durée page
+        if (data.page_duration !== undefined && !fieldFocused('page_duration') && !recentlyModified('_pageDurLastModified')) {
+            document.getElementById('page_duration').value = data.page_duration;
+        }
+
+        // Horaires ouverture/fermeture
+        if (data.horaires_ouverture) {
+            if (!fieldFocused('h_ouv','h_ferm') && !recentlyModified('_horaireLastModified')) {
+                document.getElementById('h_ouv').value = data.horaires_ouverture.heure_ouverture || "";
+                document.getElementById('h_ferm').value = data.horaires_ouverture.heure_fermeture || "";
+            }
+            if (!recentlyModified('_calLastModified')) {
+                window.selectedDates = data.horaires_ouverture.dates_ouverture || [];
+                window.renderDates();
+                renderCalendar();
+            }
+        }
+
+        // ── Countdown ─────────────────────────────────────────────────────────
         if (data.countdown_s !== undefined) {
             _cdRemaining  = data.countdown_s;
             _cdReceivedAt = Date.now();
         }
-        // Annonce en cours
+
+        // ── Annonce en cours ──────────────────────────────────────────────────
         _annonceEnCours = (data.en_annonce === true);
 
-        // Bannière annonce en temps réel
         const isAnnonce = (data.en_annonce === true);
         const banner = document.getElementById('annonce-banner');
         const bannerTitle = document.querySelector('#annonce-banner .banner-title');
@@ -435,7 +482,6 @@
             document.getElementById('tl-current').innerText = '0:00';
             document.getElementById('tl-total').innerText = '0:00';
         } else if (!window._annonceWasActive) {
-            // Nouvelle annonce → démarrer depuis 0 immédiatement
             window._annonceWasActive = true;
             var duration = (data.annonce_duration || 120) * 1000;
             var fmtMs = function(ms) {
@@ -456,36 +502,8 @@
             }, 500);
         }
 
-        if (data.info_message)
-            document.getElementById('info_message').value = data.info_message;
-        if (data.page_duration)
-            document.getElementById('page_duration').value = data.page_duration;
-        if (data.intervalle_calcul)
-            document.getElementById('int_calc').value = data.intervalle_calcul;
-
-        if (data.intervalle_secu !== undefined) {
-            // Ne pas écraser si l'utilisateur est en train de modifier les champs
-            const focused = document.activeElement;
-            const isEditing = focused && (focused.id === 'secu_h' || focused.id === 'secu_m' || focused.id === 'secu_s');
-            if (!isEditing) {
-                const total = parseInt(data.intervalle_secu) || 0;
-                document.getElementById('secu_h').value = Math.floor(total / 3600);
-                document.getElementById('secu_m').value = Math.floor((total % 3600) / 60);
-                document.getElementById('secu_s').value = total % 60;
-            }
-        }
-
-        if (data.horaires_ouverture) {
-            document.getElementById('h_ouv').value = data.horaires_ouverture.heure_ouverture || "";
-            document.getElementById('h_ferm').value = data.horaires_ouverture.heure_fermeture || "";
-            // Ne pas écraser selectedDates si l'utilisateur a modifié le calendrier récemment
-            var calRecentlyModified = window._calLastModified && (Date.now() - window._calLastModified < 30000);
-            if (!calRecentlyModified) {
-                window.selectedDates = data.horaires_ouverture.dates_ouverture || [];
-                window.renderDates();
-            }
-        }
     });
+;
 
     window.selectedDates = [];
 
@@ -577,7 +595,7 @@
         );
     };
 
-    window.updateParams = () => {
+    window.updateParams = () => { window._secuLastModified=null; window._intCalcLastModified=null;
         const h = Number(document.getElementById('secu_h').value || 0);
         const m = Number(document.getElementById('secu_m').value || 0);
         const s = Number(document.getElementById('secu_s').value || 0);
@@ -1084,7 +1102,12 @@
         renderCalendar();
     };
     window.saveCalendar = function() {
-        window._calLastModified = null;  // permettre à onValue de resync après save
+        window._calLastModified = null;
+        window._horaireLastModified = null;
+        window._secuLastModified = null;
+        window._intCalcLastModified = null;
+        window._msgLastModified = null;
+        window._pageDurLastModified = null;
         // Sauvegarder via piSend + Firebase
         var payload = {
             heure_ouverture:  document.getElementById('h_ouv') ? document.getElementById('h_ouv').value : '08:00',
