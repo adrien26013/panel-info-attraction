@@ -478,9 +478,12 @@
         if (data.horaires_ouverture) {
             document.getElementById('h_ouv').value = data.horaires_ouverture.heure_ouverture || "";
             document.getElementById('h_ferm').value = data.horaires_ouverture.heure_fermeture || "";
-            // BUGFIX 3 : On lit bien dates_ouverture (tableau de strings YYYY-MM-DD)
-            window.selectedDates = data.horaires_ouverture.dates_ouverture || [];
-            window.renderDates();
+            // Ne pas écraser selectedDates si l'utilisateur a modifié le calendrier récemment
+            var calRecentlyModified = window._calLastModified && (Date.now() - window._calLastModified < 30000);
+            if (!calRecentlyModified) {
+                window.selectedDates = data.horaires_ouverture.dates_ouverture || [];
+                window.renderDates();
+            }
         }
     });
 
@@ -1065,6 +1068,7 @@
         if (idx >= 0) window.selectedDates.splice(idx, 1);
         else window.selectedDates.push(dateStr);
         window.selectedDates.sort();
+        window._calLastModified = Date.now();  // bloquer onValue pendant 30s
         renderCalendar();
         window.renderDates();
     };
@@ -1080,6 +1084,7 @@
         renderCalendar();
     };
     window.saveCalendar = function() {
+        window._calLastModified = null;  // permettre à onValue de resync après save
         // Sauvegarder via piSend + Firebase
         var payload = {
             heure_ouverture:  document.getElementById('h_ouv') ? document.getElementById('h_ouv').value : '08:00',
