@@ -340,9 +340,27 @@
     let currentTask = null;
 
     // URL du tunnel lue depuis Firebase — mise à jour automatiquement par le Pi au démarrage
-    // IP Tailscale fixe — plus fiable que le tunnel Cloudflare
-    let PI_CMD_URL = 'http://100.126.119.48:5000';
-    console.log(`[PANEL] Tailscale URL : ${PI_CMD_URL}`);
+    // Essayer Tailscale d'abord, sinon fallback sur tunnel_url Firebase
+    let PI_CMD_URL = null;
+    const TAILSCALE_URL = 'http://100.126.119.48:5000';
+
+    // Tester si Tailscale est accessible
+    fetch(TAILSCALE_URL + '/pi_stats', { signal: AbortSignal.timeout(2000) })
+        .then(r => r.json())
+        .then(() => {
+            PI_CMD_URL = TAILSCALE_URL;
+            console.log('[PANEL] Tailscale OK :', PI_CMD_URL);
+        })
+        .catch(() => {
+            // Tailscale inaccessible → utiliser tunnel Firebase
+            onValue(ref(db, 'attractions/DRAKKAR/tunnel_url'), (snap) => {
+                const url = snap.val();
+                if (url) {
+                    PI_CMD_URL = url;
+                    console.log('[PANEL] Tunnel URL :', PI_CMD_URL);
+                }
+            });
+        });
 
     window.showSuccess = () => {
         const p = document.getElementById('success-popup');
