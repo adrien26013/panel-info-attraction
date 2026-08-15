@@ -340,14 +340,9 @@
     let currentTask = null;
 
     // URL du tunnel lue depuis Firebase — mise à jour automatiquement par le Pi au démarrage
-    let PI_CMD_URL = null;
-    onValue(ref(db, 'attractions/DRAKKAR/tunnel_url'), (snap) => {
-        const url = snap.val();
-        if (url) {
-            PI_CMD_URL = url;
-            console.log(`[PANEL] Tunnel URL : ${PI_CMD_URL}`);
-        }
-    });
+    // IP Tailscale fixe — plus fiable que le tunnel Cloudflare
+    let PI_CMD_URL = 'http://100.126.119.48:5000';
+    console.log(`[PANEL] Tailscale URL : ${PI_CMD_URL}`);
 
     window.showSuccess = () => {
         const p = document.getElementById('success-popup');
