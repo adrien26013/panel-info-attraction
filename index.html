@@ -203,19 +203,17 @@
             </button>
         </div>
 
-        <!-- Chaque saut de ligne correspond à une nouvelle page -->
         <div class="card">
             <span class="card-title">📝 Message Défilant</span>
 
-            <div style="font-size:12px; color:#555; margin-bottom:4px;">
+            <div style="font-size:12px; color:#555; margin-bottom:6px;">
                 <strong>Chaque saut de ligne = nouvelle page</strong> — appuyez sur <strong>Entrée</strong> pour créer une nouvelle page.
             </div>
 
             <textarea
                    id="info_message" oninput="window._msgLastModified=Date.now()"
                    placeholder="Page 1&#10;Page 2&#10;Page 3"
-                   rows="4"
-                   style="width:100%; resize:vertical; padding:12px; margin-top:8px; border-radius:8px; border:1px solid #ccc; box-sizing:border-box; font-family:inherit; font-size:14px; line-height:1.5;"></textarea>
+                   style="width:100%; min-height:110px; resize:vertical; padding:12px; margin-top:8px; border-radius:8px; border:1px solid #ccc; box-sizing:border-box; font-family:inherit; font-size:14px; line-height:1.5;"></textarea>
 
             <input type="number"
                    id="page_duration" oninput="window._pageDurLastModified=Date.now()"
@@ -437,9 +435,9 @@
 
         // Message défilant
         if (data.info_message !== undefined && !fieldFocused('info_message') && !recentlyModified('_msgLastModified')) {
-            // Le Pi utilise toujours | comme séparateur interne.
-            // On affiche les pages sur plusieurs lignes dans le panel.
-            document.getElementById('info_message').value = String(data.info_message).replace(/\|/g, '\n');
+            // Afficher chaque page sur sa propre ligne dans le textarea.
+            document.getElementById('info_message').value =
+                String(data.info_message).replace(/\|/g, '\n');
         }
 
         // Durée page
@@ -603,19 +601,29 @@
     };
 
     window.updateInfo = () => {
-        const rawMessage   = document.getElementById('info_message').value;
+        const rawMessage = document.getElementById('info_message').value;
         const page_duration = parseInt(document.getElementById('page_duration').value) || 8;
-        // Chaque ligne saisie dans le panel devient une page.
-        // Conversion en | pour rester compatible avec le Raspberry Pi actuel.
+
+        // Chaque ligne = une page.
+        // On supprime les lignes vides puis on convertit les retours à la ligne en "|"
+        // pour conserver la compatibilité avec le fonctionnement actuel du Raspberry Pi.
         const info_message = rawMessage
             .split(/\r?\n/)
             .map(line => line.trim())
             .filter(line => line.length > 0)
             .join('|');
+
+        // Sauvegarder systématiquement dans Firebase, même si le Pi reçoit
+        // la commande directement, afin d'éviter le retour à l'ancien message.
+        update(dbRef, { info_message, page_duration });
+
+        // Envoyer également le nouveau message directement au Raspberry Pi.
         piSend(
             { action: 'message', info_message, page_duration },
-            () => update(dbRef, { info_message, page_duration }).then(() => showSuccess())
+            () => showSuccess()
         );
+
+        showSuccess();
     };
 
     window.updateParams = () => { window._secuLastModified=null; window._intCalcLastModified=null;
