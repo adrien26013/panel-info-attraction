@@ -341,27 +341,19 @@
     let currentTask = null;
 
     // URL du tunnel lue depuis Firebase — mise à jour automatiquement par le Pi au démarrage
-    // Essayer Tailscale d'abord, sinon fallback sur tunnel_url Firebase
+    // Utiliser uniquement le tunnel HTTPS depuis Firebase
+    // (Tailscale HTTP bloqué depuis HTTPS par les navigateurs - Mixed Content)
     let PI_CMD_URL = null;
-    const TAILSCALE_URL = 'http://100.126.119.48:5000';
 
-    // Tester si Tailscale est accessible
-    fetch(TAILSCALE_URL + '/pi_stats', { signal: AbortSignal.timeout(2000) })
-        .then(r => r.json())
-        .then(() => {
-            PI_CMD_URL = TAILSCALE_URL;
-            console.log('[PANEL] Tailscale OK :', PI_CMD_URL);
-        })
-        .catch(() => {
-            // Tailscale inaccessible → utiliser tunnel Firebase
-            onValue(ref(db, 'attractions/DRAKKAR/tunnel_url'), (snap) => {
-                const url = snap.val();
-                if (url) {
-                    PI_CMD_URL = url;
-                    console.log('[PANEL] Tunnel URL :', PI_CMD_URL);
-                }
-            });
-        });
+    onValue(ref(db, 'attractions/DRAKKAR/tunnel_url'), (snap) => {
+        const url = snap.val();
+        if (url) {
+            PI_CMD_URL = url;
+            console.log('[PANEL] Tunnel URL :', PI_CMD_URL);
+            var statusEl = document.getElementById('pi-tunnel-status');
+            if (statusEl) statusEl.innerText = 'Tunnel : ' + url;
+        }
+    });
 
     window.showSuccess = () => {
         const p = document.getElementById('success-popup');
@@ -843,7 +835,7 @@
     // Poll état Pi toutes les 4s — sync piste/durée/état
     function fetchPlayerState() {
         if (!PI_CMD_URL) return;
-        fetch(PI_CMD_URL + '/music_state', { signal: AbortSignal.timeout(3000), headers: {'ngrok-skip-browser-warning': '1'} })
+        fetch(PI_CMD_URL + '/music_state', { signal: AbortSignal.timeout(5000) })
         .then(function(r) { return r.json(); })
         .then(function(s) {
             var playing = (s.is_playing === true) && (s.is_paused !== true);
@@ -970,7 +962,7 @@
 
     function fetchPiStats() {
         if (!PI_CMD_URL) return;
-        fetch(PI_CMD_URL + '/pi_stats', { signal: AbortSignal.timeout(3000), headers: {'ngrok-skip-browser-warning': '1'} })
+        fetch(PI_CMD_URL + '/pi_stats', { signal: AbortSignal.timeout(5000) })
         .then(function(r) { return r.json(); })
         .then(function(s) {
             _piCpu  = s.cpu  || 0;
