@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Panel Drakkar | TEST LOCAL</title>
+    <title>Panel Drakkar | Admin Complet</title>
     <style>
         :root { --primary: #005096; --danger: #dc3545; --success: #28a745; --info: #17a2b8; --bg: #f0f3f8; --hover: #007bff; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); padding: 20px; }
@@ -15,7 +15,7 @@
         .btn-update { background: var(--primary); color: white; font-weight: bold; }
         .date-tag { display: inline-block; background: #e2e8f0; padding: 4px 8px; border-radius: 4px; margin: 2px; font-size: 12px; cursor: pointer; border: 1px solid #cbd5e0; }
         .date-tag:hover { background: #dc3545; color: white; }
-        
+
         #loading-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); color:white; flex-direction:column; justify-content:center; align-items:center; z-index:1000; }
         #progress-container { width: 80%; max-width: 400px; background: #333; border-radius: 10px; overflow: hidden; margin-top: 20px; }
         #progress-bar { width: 0%; height: 20px; background: #17a2b8; transition: width 0.3s; }
@@ -76,13 +76,9 @@
             <span id="tl-total">0:00</span>
         </div>
     </div>
-    <div style="background:#dc3545; color:white; font-weight:bold; text-align:center; padding:10px; border-radius:8px; margin-bottom:16px;">
-        ⚠️ VERSION LOCALE DE TEST — connectee au serveur local (attractions/DRAKKAR_TEST_PC), pas au vrai Drakkar
-    </div>
-    <h2>PANEL OPÉRATEUR - DRAKKAR (TEST)</h2>
+    <h2>PANEL OPÉRATEUR - DRAKKAR</h2>
     <div class="grid">
 
-        <!-- BUGFIX 2 : Les boutons envoient maintenant la commande ET forcent un reset propre -->
         <div class="card">
             <span class="card-title">🚨 Annonces Prioritaires</span>
             <button onclick="sendCommand('SECURITE')" style="background:#f39c12; color:white;">SÉCURITÉ</button>
@@ -342,21 +338,37 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const dbRef = ref(db, 'attractions/DRAKKAR_TEST_PC');
+    const dbRef = ref(db, 'attractions/DRAKKAR');
     const storage = getStorage(app);
     window._storage = storage;
     let currentTask = null;
 
-    // VERSION LOCALE DE TEST : pas de tunnel, ce panel est servi directement
-    // par cmd_server.py (voir la route /panel) donc on utilise la meme
-    // origine (meme host:port) pour parler au serveur local - marche aussi
-    // bien en http://127.0.0.1:5000/panel que depuis un autre appareil via
-    // http://192.168.137.1:5000/panel (partage de connexion PC).
-    let PI_CMD_URL = window.location.origin;
-
-    // Pas de decouverte de tunnel en local : on utilise directement PI_CMD_URL
-    // = window.location.origin defini ci-dessus.
-    console.log('[PANEL LOCAL] Connecte a', PI_CMD_URL, '(noeud Firebase attractions/DRAKKAR_TEST_PC)');
+    // PRODUCTION : contrairement au panel local (servi directement par
+    // cmd_server.py, meme origine que le serveur), ce panel est heberge a
+    // part (Vercel) - il n'a pas d'acces direct au Pi. Le Pi, lui, expose
+    // son serveur local (port 5000) au monde via un tunnel ngrok
+    // (voir start_tunnel.sh) et publie l'URL publique du tunnel sur
+    // Firebase (attractions/DRAKKAR/tunnel_url) a chaque (re)demarrage.
+    // On l'ecoute ici pour renseigner PI_CMD_URL des qu'il est connu (et
+    // le mettre a jour tout seul si le tunnel redemarre avec une nouvelle
+    // URL) - tout le reste du panel (piSend, fetchPlayerState, etc.) est
+    // identique au panel local, ce n'est que la valeur de PI_CMD_URL qui
+    // change de source.
+    let PI_CMD_URL = null;
+    onValue(ref(db, 'attractions/DRAKKAR/tunnel_url'), function(snap) {
+        const url = snap.val();
+        const tunnelStatusEl = document.getElementById('pi-tunnel-status');
+        if (url) {
+            if (url !== PI_CMD_URL) {
+                PI_CMD_URL = url;
+                console.log('[PANEL] Tunnel Pi decouvert :', PI_CMD_URL);
+            }
+            if (tunnelStatusEl) tunnelStatusEl.innerText = 'Connexion Pi : ' + url;
+        } else {
+            PI_CMD_URL = null;
+            if (tunnelStatusEl) tunnelStatusEl.innerText = 'Connexion Pi : tunnel indisponible (Firebase uniquement)';
+        }
+    });
 
     window.showSuccess = () => {
         const p = document.getElementById('success-popup');
@@ -548,10 +560,7 @@
         window.renderDates();
     };
 
-    // BUGFIX 2 : sendCommand écrit la commande puis attend 100ms
-    // pour s'assurer que Firebase a bien reçu la valeur non-vide
-    // avant tout éventuel reset côté Raspberry (le Pi reset lui-même après exécution)
-    // Fonction centrale : envoie au Pi directement, fallback Firebase si indisponible
+    // Fonction centrale : envoie au Pi directement (via le tunnel), fallback Firebase si indisponible
     const piSend = (payload, firebaseFallback) => {
         if (!PI_CMD_URL) {
             console.log(`[PI] URL non disponible, fallback Firebase`);
@@ -588,7 +597,6 @@
         );
     };
 
-    // BUGFIX 2 : setForce n'efface plus force_open/close après 1s
     // C'est le Pi qui gère l'état via mode_auto — on envoie simplement les flags
     window.setForce = (m) => {
         // Toujours écrire dans Firebase pour que onValue mette à jour le statut affiché
@@ -647,7 +655,7 @@
         );
     };
 
-    // BUGFIX 3 : On envoie dates_ouverture (tableau de strings YYYY-MM-DD)
+    // On envoie dates_ouverture (tableau de strings YYYY-MM-DD)
     // Le Python lira ce tableau pour vérifier si la date du jour est incluse
     window.updateSchedule = () => {
         const horaires_ouverture = {
@@ -668,39 +676,6 @@
         document.getElementById('loading-overlay').style.display = 'none';
     };
 
-    window.uploadMusic = () => {
-        const file = document.getElementById('file_music').files[0];
-        if (!file) return alert("Sélectionnez un fichier");
-
-        document.getElementById('loading-overlay').style.display = 'flex';
-
-        currentTask = uploadBytesResumable(
-            storageRef(storage, 'musique_ambiance_drakkar.mp3'),
-            file
-        );
-
-        currentTask.on('state_changed',
-            (snap) => {
-                const p = (snap.bytesTransferred / snap.totalBytes) * 100;
-                document.getElementById('progress-bar').style.width = p + '%';
-                document.getElementById('percent-text').innerText = Math.round(p) + '%';
-            },
-            (err) => {
-                alert(err);
-                document.getElementById('loading-overlay').style.display = 'none';
-            },
-            () => {
-                getDownloadURL(currentTask.snapshot.ref).then((url) => {
-                    update(dbRef, { music_url: url }).then(() => {
-                        document.getElementById('loading-overlay').style.display = 'none';
-                        showSuccess();
-                    });
-                });
-            }
-        );
-    };
-
-
     // ── Lecteur audio ────────────────────────────────────────────────────────
     let _trackDuration  = 0;
     let _playlistUrls   = {};   // nom → URL Firebase Storage
@@ -715,8 +690,7 @@
     };
 
     window.piCmd    = (action, extra = {}) => piSend({ action, ...extra }, null);
-    // ── Compte à rebours prochaine consigne ─────────────────────────────────
-    // ── Compte à rebours — source unique : countdown_s Firebase ─────────────
+    // ── Compte à rebours prochaine consigne — source unique : countdown_s Firebase ─────────
     var _intervalleActif = true;
     var _annonceEnCours  = false;
     var _cdRemaining     = -1;   // secondes restantes reçues depuis Firebase
@@ -753,8 +727,6 @@
         cdbox.style.background = remaining < 30 ? '#fff5f5' : '#f0f3f8';
     }, 500);
 
-    function resetCountdown() {} // no-op : c'est le Pi qui est maître
-
     window.toggleIntervalle = function(checked) {
         _intervalleActif = checked;
         window._intervalleLastSet = Date.now();  // noter quand l'user a modifié
@@ -783,7 +755,6 @@
         if (audio.src && audio.duration) audio.currentTime = pct * audio.duration;
     };
 
-    // Charger les URLs Firebase Storage des pistes existantes
     // Charger les URLs Firebase Storage des pistes existantes
     import('https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js').then(function(mod) {
         mod.listAll(storageRef(window._storage, 'playlist/')).then(function(res) {
@@ -1097,7 +1068,7 @@
     };
 
     // Lire horaires_semaine depuis Firebase
-    onValue(ref(db, 'attractions/DRAKKAR_TEST_PC/horaires_ouverture/horaires_semaine'), function(snap) {
+    onValue(ref(db, 'attractions/DRAKKAR/horaires_ouverture/horaires_semaine'), function(snap) {
         if (snap.val()) {
             _weekSchedule = snap.val();
             renderWeekSchedule(_weekSchedule);
