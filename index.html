@@ -36,16 +36,6 @@
         .history-time { color:#999; min-width:60px; }
         .history-type { color:#005096; font-weight:bold; }
         .firebase-dot { width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:6px; }
-        .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; margin-top:8px; }
-        .cal-day { text-align:center; padding:6px 2px; border-radius:6px; cursor:pointer; font-size:12px; border:1px solid transparent; }
-        .cal-day:hover { background:#e1f5fe; }
-        .cal-day.selected { background:#005096; color:white; }
-        .cal-day.today { border:2px solid #005096; font-weight:bold; }
-        .cal-day.other-month { color:#ccc; }
-        .cal-header { text-align:center; font-size:11px; color:#999; padding:4px; }
-        .day-schedule { display:flex; align-items:center; gap:6px; padding:4px 0; font-size:12px; }
-        .day-schedule input[type=checkbox] { width:auto; margin:0; }
-        .day-schedule input[type=time] { width:80px; padding:4px 6px; font-size:12px; margin:0; }
         #annonce-banner { display:none; background:#e65c00; color:white; padding:12px 16px; font-weight:bold; font-size:15px; border-radius:8px; margin-bottom:16px; }
         #annonce-banner .banner-title { text-align:center; margin-bottom:8px; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
@@ -88,12 +78,32 @@
         </div>
 
         <div class="card">
-            <span class="card-title">📅 Mode & Forçage</span>
+            <span class="card-title">📅 Planning</span>
             <div id="status_mode"
                  style="padding:10px; margin-bottom:10px; text-align:center; border-radius:5px; font-weight:bold; background:#eee;">
                 MODE : CHARGEMENT...
             </div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px;">
+            <div style="display:flex; gap:5px;">
+                <div style="flex:1;">
+                    <div style="font-size:11px; color:#999; margin-bottom:2px;">Ouverture</div>
+                    <input type="time" id="h_ouv" style="width:100%;" oninput="window._horaireLastModified=Date.now()">
+                </div>
+                <div style="flex:1;">
+                    <div style="font-size:11px; color:#999; margin-bottom:2px;">Fermeture</div>
+                    <input type="time" id="h_ferm" style="width:100%;" oninput="window._horaireLastModified=Date.now()">
+                </div>
+            </div>
+            <div style="font-size:12px; color:#555; margin-top:10px;">
+                Dates d'ouverture exceptionnelles (laisser vide = tous les jours dans ces horaires) :
+            </div>
+            <div style="display:flex; gap:5px;">
+                <input type="date" id="date_input" style="flex:1;">
+                <button onclick="addDate()" style="width:auto; padding:10px 14px;">+ Ajouter</button>
+            </div>
+            <div id="date_list" style="margin:10px 0;"></div>
+            <button class="btn-update" onclick="updateSchedule()">VALIDER PLANNING</button>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px; margin-top:12px;">
                 <button onclick="setForce('OPEN')" style="background:var(--success); color:white; font-size:12px;">
                     OUVERT
                 </button>
@@ -121,10 +131,11 @@
                 </button>
             </div>
 
-            <div style="font-size:12px; color:#555; margin-top:8px;">Capacité horaire (personnes/h)</div>
-            <input type="number"
-                   id="capacite"
-                   placeholder="Ex: 800">
+            <div style="font-size:12px; color:#555; margin-top:8px;">Personnes en file</div>
+            <div style="display:flex; gap:5px;">
+                <input type="number" id="visiteurs_file" placeholder="Ex: 150" style="flex:1;">
+                <button onclick="setVisiteursFile()" style="width:auto; padding:10px 14px;">Valider</button>
+            </div>
 
             <div style="font-size:12px; color:#555; margin-top:8px;">Intervalle de calcul de l'attente (secondes)</div>
             <input type="number"
@@ -264,46 +275,6 @@
             <div id="annonce-history" style="max-height:200px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px;">
                 <div style="padding:12px; color:#999; text-align:center; font-size:13px;">Aucune annonce</div>
             </div>
-        </div>
-
-        <!-- Planning par jour de semaine -->
-        <div class="card">
-            <span class="card-title">📅 Horaires par jour</span>
-            <div style="font-size:12px; color:#555; margin-bottom:8px;">Personnalisez les horaires pour chaque jour de la semaine :</div>
-            <div id="week-schedule"></div>
-            <button class="btn-update" onclick="saveWeekSchedule()" style="margin-top:10px;">
-                VALIDER HORAIRES SEMAINE
-            </button>
-
-            <hr style="margin:15px 0;">
-
-            <!-- Calendrier visuel -->
-            <div style="font-size:12px; color:#555; margin-bottom:6px; font-weight:bold;">CALENDRIER DATES OUVERTURE</div>
-            <div style="display:flex; gap:5px; margin-bottom:8px;">
-                <div style="flex:1;">
-                    <div style="font-size:11px; color:#999; margin-bottom:2px;">Ouverture</div>
-                    <input type="time" id="h_ouv" style="width:100%;" oninput="window._horaireLastModified=Date.now()">
-                </div>
-                <div style="flex:1;">
-                    <div style="font-size:11px; color:#999; margin-bottom:2px;">Fermeture</div>
-                    <input type="time" id="h_ferm" style="width:100%;" oninput="window._horaireLastModified=Date.now()">
-                </div>
-            </div>
-            <div style="font-size:11px; color:#999; margin-bottom:8px;">Cliquez sur les jours pour les sélectionner (vide = tous les jours)</div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <button onclick="calPrev()" style="width:32px; height:32px; padding:0; border-radius:6px; background:#f0f3f8; border:1px solid #ccc;">◀</button>
-                <span id="cal-month-label" style="font-weight:bold; font-size:14px;"></span>
-                <button onclick="calNext()" style="width:32px; height:32px; padding:0; border-radius:6px; background:#f0f3f8; border:1px solid #ccc;">▶</button>
-            </div>
-            <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:2px; margin-bottom:4px;">
-                <div class="cal-header">L</div><div class="cal-header">M</div>
-                <div class="cal-header">M</div><div class="cal-header">J</div>
-                <div class="cal-header">V</div><div class="cal-header">S</div>
-                <div class="cal-header">D</div>
-            </div>
-            <div class="cal-grid" id="cal-grid"></div>
-            <div id="date_list" style="margin:10px 0;"></div>
-            <button class="btn-update" onclick="saveCalendar()">VALIDER CALENDRIER</button>
         </div>
 
     </div>
@@ -469,7 +440,6 @@
             if (!recentlyModified('_calLastModified')) {
                 window.selectedDates = data.horaires_ouverture.dates_ouverture || [];
                 window.renderDates();
-                renderCalendar();
             }
         }
 
@@ -642,27 +612,36 @@
         const m = Number(document.getElementById('secu_m').value || 0);
         const s = Number(document.getElementById('secu_s').value || 0);
         const total_secu      = (h * 3600) + (m * 60) + s;
-        const capacite        = Number(document.getElementById('capacite').value || 0);
         const intervalle_calcul = Number(document.getElementById('int_calc').value || 7);
         // Mise à jour locale immédiate du countdown en attendant la réponse du Pi
         _cdRemaining  = total_secu;
         _cdReceivedAt = Date.now();
         // Sauvegarder dans Firebase
-        update(dbRef, { capacite, intervalle_secu: total_secu, intervalle_calcul });
+        update(dbRef, { intervalle_secu: total_secu, intervalle_calcul });
         piSend(
-            { action: 'params', capacite, intervalle_secu: total_secu, intervalle_calcul },
+            { action: 'params', intervalle_secu: total_secu, intervalle_calcul },
             () => showSuccess()
         );
+    };
+
+    // Personnes actuellement en file (voir cmd_server.py, action
+    // "compteur_set") - meme chemin que la saisie sur le pupitre, declenche
+    // le recalcul du temps d'attente et sa publication (panel maintenance +
+    // app visiteur).
+    window.setVisiteursFile = () => {
+        const valeur = parseInt(document.getElementById('visiteurs_file').value) || 0;
+        piSend({ action: 'compteur_set', valeur }, null);
     };
 
     // On envoie dates_ouverture (tableau de strings YYYY-MM-DD)
     // Le Python lira ce tableau pour vérifier si la date du jour est incluse
     window.updateSchedule = () => {
+        window._horaireLastModified = null;
+        window._calLastModified = null;
         const horaires_ouverture = {
             heure_ouverture: document.getElementById('h_ouv') ? document.getElementById('h_ouv').value : '08:00',
             heure_fermeture: document.getElementById('h_ferm') ? document.getElementById('h_ferm').value : '18:00',
-            dates_ouverture: window.selectedDates,
-            horaires_semaine: _weekSchedule
+            dates_ouverture: window.selectedDates
         };
         piSend(
             { action: 'planning', horaires_ouverture },
@@ -1012,146 +991,6 @@
     setInterval(fetchPiStats, 3000);
     setTimeout(fetchPiStats, 500);
 
-    // ── Horaires par jour de semaine ─────────────────────────────────────────
-    var JOURS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
-    var _weekSchedule = {};
-
-    function renderWeekSchedule(data) {
-        var container = document.getElementById('week-schedule');
-        container.innerHTML = '';
-        JOURS.forEach(function(jour, i) {
-            var hs = (_weekSchedule[String(i)] || {});
-            var actif = hs.actif !== false;
-            var ouv   = hs.ouverture || '08:00';
-            var ferm  = hs.fermeture || '18:00';
-            var div = document.createElement('div');
-            div.className = 'day-schedule';
-            div.innerHTML =
-                '<input type="checkbox" id="day-' + i + '" ' + (actif ? 'checked' : '') + ' onchange="toggleDay(' + i + ', this.checked)">' +
-                '<label for="day-' + i + '" style="min-width:70px;font-weight:bold;">' + jour + '</label>' +
-                '<input type="time" id="day-ouv-' + i + '" value="' + ouv + '" ' + (actif ? '' : 'disabled') + '>' +
-                '<span style="color:#999;">→</span>' +
-                '<input type="time" id="day-ferm-' + i + '" value="' + ferm + '" ' + (actif ? '' : 'disabled') + '>';
-            container.appendChild(div);
-        });
-    }
-
-    window.toggleDay = function(i, checked) {
-        document.getElementById('day-ouv-' + i).disabled  = !checked;
-        document.getElementById('day-ferm-' + i).disabled = !checked;
-    };
-
-    window.saveWeekSchedule = function() {
-        var sched = {};
-        JOURS.forEach(function(j, i) {
-            sched[String(i)] = {
-                actif:      document.getElementById('day-' + i).checked,
-                ouverture:  document.getElementById('day-ouv-' + i).value,
-                fermeture:  document.getElementById('day-ferm-' + i).value
-            };
-        });
-        _weekSchedule = sched;
-        piSend({ action: 'planning', horaires_ouverture: {
-            heure_ouverture: document.getElementById('h_ouv').value,
-            heure_fermeture: document.getElementById('h_ferm').value,
-            dates_ouverture: window.selectedDates,
-            horaires_semaine: sched
-        }}, function() {
-            update(dbRef, { horaires_ouverture: {
-                heure_ouverture: document.getElementById('h_ouv').value,
-                heure_fermeture: document.getElementById('h_ferm').value,
-                dates_ouverture: window.selectedDates,
-                horaires_semaine: sched
-            }}).then(function() { showSuccess(); });
-        });
-        showSuccess();
-    };
-
-    // Lire horaires_semaine depuis Firebase
-    onValue(ref(db, 'attractions/DRAKKAR/horaires_ouverture/horaires_semaine'), function(snap) {
-        if (snap.val()) {
-            _weekSchedule = snap.val();
-            renderWeekSchedule(_weekSchedule);
-        } else {
-            renderWeekSchedule({});
-        }
-    });
-
-    // ── Calendrier visuel ────────────────────────────────────────────────────
-    var _calYear  = new Date().getFullYear();
-    var _calMonth = new Date().getMonth();
-
-    function renderCalendar() {
-        var label = document.getElementById('cal-month-label');
-        var grid  = document.getElementById('cal-grid');
-        var MOIS  = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
-        label.innerText = MOIS[_calMonth] + ' ' + _calYear;
-
-        var firstDay = new Date(_calYear, _calMonth, 1).getDay();
-        firstDay = (firstDay === 0) ? 6 : firstDay - 1; // lundi=0
-        var daysInMonth = new Date(_calYear, _calMonth + 1, 0).getDate();
-        var today = new Date().toISOString().split('T')[0];
-
-        grid.innerHTML = '';
-        // Cases vides avant le 1er
-        for (var i = 0; i < firstDay; i++) {
-            grid.innerHTML += '<div></div>';
-        }
-        for (var d = 1; d <= daysInMonth; d++) {
-            var dateStr = _calYear + '-' + String(_calMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-            var isSelected = window.selectedDates.includes(dateStr);
-            var isToday    = dateStr === today;
-            var cls = 'cal-day' + (isSelected ? ' selected' : '') + (isToday ? ' today' : '');
-            grid.innerHTML += '<div class="' + cls + '" onclick="window.toggleCalDay(\'' + dateStr + '\')">' + d + '</div>';
-        }
-    }
-
-    window.toggleCalDay = function(dateStr) {
-        var idx = window.selectedDates.indexOf(dateStr);
-        if (idx >= 0) window.selectedDates.splice(idx, 1);
-        else window.selectedDates.push(dateStr);
-        window.selectedDates.sort();
-        window._calLastModified = Date.now();  // bloquer onValue pendant 30s
-        renderCalendar();
-        window.renderDates();
-    };
-
-    window.calPrev = function() {
-        _calMonth--;
-        if (_calMonth < 0) { _calMonth = 11; _calYear--; }
-        renderCalendar();
-    };
-    window.calNext = function() {
-        _calMonth++;
-        if (_calMonth > 11) { _calMonth = 0; _calYear++; }
-        renderCalendar();
-    };
-    window.saveCalendar = function() {
-        window._calLastModified = null;
-        window._horaireLastModified = null;
-        window._secuLastModified = null;
-        window._intCalcLastModified = null;
-        window._msgLastModified = null;
-        window._pageDurLastModified = null;
-        // Sauvegarder via piSend + Firebase
-        var payload = {
-            heure_ouverture:  document.getElementById('h_ouv') ? document.getElementById('h_ouv').value : '08:00',
-            heure_fermeture:  document.getElementById('h_ferm') ? document.getElementById('h_ferm').value : '18:00',
-            dates_ouverture:  window.selectedDates,
-            horaires_semaine: _weekSchedule
-        };
-        piSend({ action: 'planning', horaires_ouverture: payload }, null);
-        update(dbRef, { horaires_ouverture: payload }).then(function() { showSuccess(); });
-    };
-
-    // Init calendrier
-    setTimeout(renderCalendar, 500);
-    // Re-render quand selectedDates change
-    var _origRenderDates = window.renderDates;
-    window.renderDates = function() {
-        _origRenderDates();
-        renderCalendar();
-    };
 
 </script>
 
