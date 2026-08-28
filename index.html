@@ -3,45 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <title>Panel Drakkar | Admin Complet</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 50'%3E%3Cpath d='M4 34 Q30 46 56 34 Q50 30 30 30 Q10 30 4 34Z' fill='%230d3b52'/%3E%3Cpath d='M4 34 Q0 26 8 20 Q10 27 6 32Z' fill='%230d3b52'/%3E%3Cpath d='M56 34 Q59 29 54 25 Q53 30 55 33Z' fill='%230d3b52'/%3E%3Crect x='28.5' y='6' width='3' height='26' rx='1.5' fill='%23b8863f'/%3E%3Cpath d='M30 8 C42 10 42 22 30 24 C33 18 33 13 30 8Z' fill='%23e8cd94' stroke='%23b8863f' stroke-width='1'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #005096; --danger: #dc3545; --success: #28a745; --info: #17a2b8; --bg: #f0f3f8; --hover: #007bff; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); padding: 20px; }
-        .container { max-width: 950px; margin: auto; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: transform 0.2s; }
-        .card-title { font-weight: bold; color: var(--primary); margin-bottom: 15px; display: block; border-left: 4px solid var(--primary); padding-left: 8px; }
-        input, button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; cursor: pointer; transition: all 0.2s; }
-        button:hover { filter: brightness(1.1); transform: scale(1.02); }
-        .btn-update { background: var(--primary); color: white; font-weight: bold; }
-        .date-tag { display: inline-block; background: #e2e8f0; padding: 4px 8px; border-radius: 4px; margin: 2px; font-size: 12px; cursor: pointer; border: 1px solid #cbd5e0; }
-        .date-tag:hover { background: #dc3545; color: white; }
+        :root {
+            /* Fjord bleu profond en primaire, bronze en accent — identité "drakkar" sans sombrer dans le cliché */
+            --primary: #0d3b52;
+            --sea: #1c6e8c;
+            --bronze: #b8863f;
+            --bronze-light: #e8cd94;
+            --danger: #b3432f;
+            --danger-pale: #f4e2dc;
+            --success: #3f7d5c;
+            --success-pale: #e1ece4;
+            --info: #1c7a8c;
+            --info-pale: #e0eef1;
+            --warning: #c07f2a;
+            --warning-pale: #f5e8d3;
+            --urgent: #a8431f;
+            --neutral: #5c6b70;
+            --dim: #c9c2b0;
+            --bg: #eef1ee;
+            --card: #fffdf8;
+            --border: #ddd3ba;
+            --mist: #e7eef0;
+            --text: #16262f;
+            --text-muted: #6a7a80;
+            --hover: #1c6e8c;
+        }
+        body {
+            font-family: 'Manrope', 'Segoe UI', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 24px;
+            background-image: repeating-linear-gradient(135deg, rgba(13,59,82,0.03) 0px, rgba(13,59,82,0.03) 1px, transparent 1px, transparent 15px);
+        }
+        .container { max-width: 980px; margin: auto; }
+        .app-header { display:flex; align-items:center; gap:14px; margin-bottom:24px; padding-bottom:16px; border-bottom:2px solid var(--border); }
+        .app-header .ship-icon { flex-shrink:0; }
+        .app-header h2 { font-family:'Fraunces', Georgia, serif; font-size:26px; font-weight:700; letter-spacing:0.02em; color:var(--primary); margin:0; text-transform:uppercase; }
+        .app-header .subtitle { font-size:12px; color:var(--text-muted); letter-spacing:0.09em; text-transform:uppercase; margin-top:3px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+        .card { background: var(--card); padding: 22px; border-radius: 14px; border:1px solid var(--border); box-shadow: 0 2px 10px rgba(13,59,82,0.07); position:relative; overflow:hidden; }
+        .card::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg, var(--primary), var(--bronze)); }
+        .card-title { font-family:'Fraunces', Georgia, serif; font-weight:600; color: var(--primary); margin-bottom: 16px; display: block; border-left: 3px solid var(--bronze); padding-left: 10px; font-size:15.5px; letter-spacing:0.01em; }
+        input, button { font-family:'Manrope', sans-serif; width: 100%; padding: 12px 14px; margin-top: 8px; border-radius: 9px; border: 1.5px solid var(--border); box-sizing: border-box; cursor: pointer; transition: all 0.15s ease; font-size:14px; color:var(--text); background:#fff; }
+        input:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(13,59,82,0.12); }
+        button { font-weight:700; letter-spacing:0.03em; text-transform:uppercase; font-size:12.5px; border:none; box-shadow:0 1px 2px rgba(0,0,0,0.08); }
+        button:hover { filter: brightness(1.08); transform: translateY(-1px); box-shadow:0 4px 10px rgba(13,59,82,0.18); }
+        button:active { transform: translateY(0); }
+        .btn-update { background: var(--primary); color: white; font-weight: 800; border-bottom:3px solid var(--bronze); }
+        .date-tag { display: inline-block; background: var(--mist); color:var(--primary); padding: 5px 10px; border-radius: 6px; margin: 3px; font-size: 12px; font-weight:600; cursor: pointer; border: 1px solid var(--border); }
+        .date-tag:hover { background: var(--danger); color: white; border-color:var(--danger); }
 
-        #loading-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); color:white; flex-direction:column; justify-content:center; align-items:center; z-index:1000; }
-        #progress-container { width: 80%; max-width: 400px; background: #333; border-radius: 10px; overflow: hidden; margin-top: 20px; }
-        #progress-bar { width: 0%; height: 20px; background: #17a2b8; transition: width 0.3s; }
-        #success-popup { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); color:white; flex-direction:column; justify-content:center; align-items:center; z-index:2000; }
-        .playlist-item { display:flex; align-items:center; padding:8px 10px; border-bottom:1px solid #f0f3f8; cursor:pointer; transition:background 0.15s; }
-        .playlist-item:hover { background:#f0f3f8; }
-        .playlist-item.active { background:#e1f5fe; font-weight:bold; color:#005096; }
+        #loading-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(11,41,57,0.93); color:white; flex-direction:column; justify-content:center; align-items:center; z-index:1000; font-family:'Manrope',sans-serif; }
+        #progress-container { width: 80%; max-width: 400px; background: rgba(255,255,255,0.15); border-radius: 10px; overflow: hidden; margin-top: 20px; }
+        #progress-bar { width: 0%; height: 20px; background: linear-gradient(90deg, var(--info), var(--bronze)); transition: width 0.3s; }
+        #success-popup { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(11,41,57,0.88); color:white; flex-direction:column; justify-content:center; align-items:center; z-index:2000; font-family:'Manrope',sans-serif; }
+        .playlist-item { display:flex; align-items:center; padding:8px 10px; border-bottom:1px solid var(--mist); cursor:pointer; transition:background 0.15s; }
+        .playlist-item:hover { background:var(--mist); }
+        .playlist-item.active { background:var(--info-pale); font-weight:bold; color:var(--primary); }
         .playlist-item .track-name { flex:1; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-        .playlist-item .track-del { color:#dc3545; font-size:16px; padding:0 4px; cursor:pointer; flex-shrink:0; }
-        input[type=range] { -webkit-appearance:none; height:4px; background:#e2e8f0; border-radius:2px; outline:none; border:none; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:#005096; cursor:pointer; }
-        .stat-box { display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:#f8fafc; border-radius:8px; margin-bottom:6px; }
-        .stat-label { font-size:12px; color:#666; }
-        .stat-value { font-size:14px; font-weight:bold; color:#005096; }
-        .stat-bar { height:6px; background:#e2e8f0; border-radius:3px; margin-top:4px; overflow:hidden; }
+        .playlist-item .track-del { color:var(--danger); font-size:16px; padding:0 4px; cursor:pointer; flex-shrink:0; }
+        input[type=range] { -webkit-appearance:none; height:4px; background:var(--mist); border-radius:2px; outline:none; border:none; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--primary); cursor:pointer; }
+        .stat-box { display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:var(--mist); border-radius:8px; margin-bottom:6px; }
+        .stat-label { font-size:12px; color:var(--text-muted); }
+        .stat-value { font-size:14px; font-weight:bold; color:var(--primary); font-variant-numeric:tabular-nums; }
+        .stat-bar { height:6px; background:var(--border); border-radius:3px; margin-top:4px; overflow:hidden; }
         .stat-bar-fill { height:100%; border-radius:3px; transition:width 0.5s; }
-        .history-item { display:flex; justify-content:space-between; padding:6px 10px; border-bottom:1px solid #f0f3f8; font-size:12px; }
-        .history-time { color:#999; min-width:60px; }
-        .history-type { color:#005096; font-weight:bold; }
+        .history-item { display:flex; justify-content:space-between; padding:6px 10px; border-bottom:1px solid var(--mist); font-size:12px; }
+        .history-time { color:var(--text-muted); min-width:60px; font-variant-numeric:tabular-nums; }
+        .history-type { color:var(--primary); font-weight:bold; }
         .firebase-dot { width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:6px; }
-        #annonce-banner { display:none; background:#e65c00; color:white; padding:12px 16px; font-weight:bold; font-size:15px; border-radius:8px; margin-bottom:16px; }
+        #annonce-banner { display:none; background:linear-gradient(135deg, var(--urgent), #7a2c17); color:white; padding:12px 16px; font-weight:bold; font-size:15px; border-radius:10px; margin-bottom:16px; box-shadow:0 4px 14px rgba(168,67,31,0.35); }
         #annonce-banner .banner-title { text-align:center; margin-bottom:8px; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
         #annonce-banner .timeline-wrap { display:flex; align-items:center; gap:8px; font-size:12px; font-weight:normal; }
         #annonce-banner .timeline-bar { flex:1; height:6px; background:rgba(255,255,255,0.3); border-radius:3px; overflow:hidden; }
-        #annonce-banner .timeline-progress { height:100%; background:white; border-radius:3px; width:0%; transition:width 0.5s linear; }
+        #annonce-banner .timeline-progress { height:100%; background:var(--bronze-light); border-radius:3px; width:0%; transition:width 0.5s linear; }
     </style>
 </head>
 <body>
@@ -66,21 +108,33 @@
             <span id="tl-total">0:00</span>
         </div>
     </div>
-    <h2>PANEL OPÉRATEUR - DRAKKAR</h2>
+    <div class="app-header">
+        <svg class="ship-icon" width="40" height="34" viewBox="0 0 60 50" aria-hidden="true">
+            <path d="M4 34 Q30 46 56 34 Q50 30 30 30 Q10 30 4 34Z" fill="#0d3b52"/>
+            <path d="M4 34 Q0 26 8 20 Q10 27 6 32Z" fill="#0d3b52"/>
+            <path d="M56 34 Q59 29 54 25 Q53 30 55 33Z" fill="#0d3b52"/>
+            <rect x="28.5" y="6" width="3" height="26" rx="1.5" fill="#b8863f"/>
+            <path d="M30 8 C42 10 42 22 30 24 C33 18 33 13 30 8Z" fill="#e8cd94" stroke="#b8863f" stroke-width="1"/>
+        </svg>
+        <div>
+            <h2>Panel Opérateur — Drakkar</h2>
+            <div class="subtitle">Pilotage &amp; supervision en temps réel</div>
+        </div>
+    </div>
     <div class="grid">
 
         <div class="card">
             <span class="card-title">🚨 Annonces Prioritaires</span>
-            <button onclick="sendCommand('SECURITE')" style="background:#f39c12; color:white;">SÉCURITÉ</button>
+            <button onclick="sendCommand('SECURITE')" style="background:var(--warning); color:white;">SÉCURITÉ</button>
             <button onclick="sendCommand('TECHNIQUE')" style="background:var(--info); color:white;">TECHNIQUE</button>
-            <button onclick="sendCommand('FERMETURE')" style="background:#6c757d; color:white;">FERMETURE</button>
+            <button onclick="sendCommand('FERMETURE')" style="background:var(--neutral); color:white;">FERMETURE</button>
             <button onclick="sendCommand('STOP_ANNONCE')" style="background:var(--danger); color:white;">ARRÊTER ANNONCE</button>
         </div>
 
         <div class="card">
             <span class="card-title">📅 Planning</span>
             <div id="status_mode"
-                 style="padding:10px; margin-bottom:10px; text-align:center; border-radius:5px; font-weight:bold; background:#eee;">
+                 style="padding:10px; margin-bottom:10px; text-align:center; border-radius:8px; font-weight:bold; background:var(--mist);">
                 MODE : CHARGEMENT...
             </div>
             <div style="display:flex; gap:5px;">
@@ -143,14 +197,14 @@
                 <input type="number" id="secu_m" placeholder="Minutes" oninput="window._secuLastModified=Date.now()">
                 <input type="number" id="secu_s" placeholder="Secondes" oninput="window._secuLastModified=Date.now()">
             </div>
-            <div style="display:flex; align-items:center; gap:10px; margin-top:8px; padding:8px; background:#f8fafc; border-radius:8px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-top:8px; padding:8px; background:var(--mist); border-radius:8px;">
                 <input type="checkbox" id="intervalle_actif" style="width:auto; margin:0;" onchange="toggleIntervalle(this.checked)">
                 <label for="intervalle_actif" style="font-size:13px; cursor:pointer; margin:0;">Activer le déclenchement automatique</label>
                 <span id="intervalle_status" style="font-size:11px; color:#999; margin-left:auto;"></span>
             </div>
-            <div id="countdown-box" style="margin-top:8px; padding:10px 12px; background:#f0f3f8; border-radius:8px; text-align:center;">
-                <div style="font-size:11px; color:#666; margin-bottom:4px;">PROCHAINE CONSIGNE DANS :</div>
-                <div id="countdown-value" style="font-size:22px; font-weight:bold; color:#005096; font-family:monospace;">--:--</div>
+            <div id="countdown-box" style="margin-top:8px; padding:10px 12px; background:var(--mist); border-radius:8px; text-align:center;">
+                <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px;">PROCHAINE CONSIGNE DANS :</div>
+                <div id="countdown-value" style="font-size:22px; font-weight:bold; color:var(--primary); font-family:monospace;">--:--</div>
             </div>
 
             <button class="btn-update"
@@ -165,23 +219,23 @@
             <span class="card-title">🎵 Lecteur & Playlist</span>
 
             <!-- Piste en cours -->
-            <div id="player-track" style="font-weight:bold; text-align:center; margin-bottom:4px; font-size:13px; color:#005096; min-height:18px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Chargement...</div>
+            <div id="player-track" style="font-weight:bold; text-align:center; margin-bottom:4px; font-size:13px; color:var(--primary); min-height:18px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Chargement...</div>
 
             <!-- Timeline -->
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-                <span id="player-pos" style="font-size:11px; min-width:32px; color:#666;">0:00</span>
-                <div style="flex:1; height:5px; background:#e2e8f0; border-radius:3px; cursor:pointer;" id="seek-bar" onclick="window.seekTo(event)">
-                    <div id="player-progress" style="height:100%; background:#005096; border-radius:3px; width:0%;"></div>
+                <span id="player-pos" style="font-size:11px; min-width:32px; color:var(--text-muted);">0:00</span>
+                <div style="flex:1; height:5px; background:var(--mist); border-radius:3px; cursor:pointer;" id="seek-bar" onclick="window.seekTo(event)">
+                    <div id="player-progress" style="height:100%; background:var(--primary); border-radius:3px; width:0%;"></div>
                 </div>
-                <span id="player-dur" style="font-size:11px; min-width:32px; text-align:right; color:#666;">0:00</span>
+                <span id="player-dur" style="font-size:11px; min-width:32px; text-align:right; color:var(--text-muted);">0:00</span>
             </div>
 
             <!-- Contrôles Pi (contrôle la musique sur le Pi) -->
             <div style="font-size:11px; color:#999; text-align:center; margin-bottom:4px;">CONTRÔLE PI</div>
             <div style="display:flex; justify-content:center; align-items:center; gap:10px; margin-bottom:10px;">
-                <button onclick="piCmd('music_prev')" style="width:40px;height:40px;border-radius:50%;background:#f0f3f8;border:1px solid #ccc;font-size:16px;cursor:pointer;">⏮</button>
-                <button id="btn-playpause" onclick="piCmd('music_pause')" style="width:52px;height:52px;border-radius:50%;background:#005096;color:white;border:none;font-size:20px;cursor:pointer;">▶</button>
-                <button onclick="piCmd('music_next')" style="width:40px;height:40px;border-radius:50%;background:#f0f3f8;border:1px solid #ccc;font-size:16px;cursor:pointer;">⏭</button>
+                <button onclick="piCmd('music_prev')" style="width:40px;height:40px;border-radius:50%;background:var(--mist);border:1px solid var(--border);font-size:16px;cursor:pointer;">⏮</button>
+                <button id="btn-playpause" onclick="piCmd('music_pause')" style="width:52px;height:52px;border-radius:50%;background:var(--primary);color:white;border:none;font-size:20px;cursor:pointer;">▶</button>
+                <button onclick="piCmd('music_next')" style="width:40px;height:40px;border-radius:50%;background:var(--mist);border:1px solid var(--border);font-size:16px;cursor:pointer;">⏭</button>
             </div>
 
             <!-- Volume Pi -->
@@ -197,12 +251,12 @@
 
             <!-- Playlist -->
             <div style="font-size:12px; color:#555; margin-bottom:6px; font-weight:bold;">PLAYLIST</div>
-            <div id="playlist-container" style="max-height:180px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px; margin-bottom:10px;"></div>
+            <div id="playlist-container" style="max-height:180px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; margin-bottom:10px;"></div>
 
             <!-- Upload -->
             <div style="font-size:12px; color:#555; margin-bottom:4px;">Ajouter un ou plusieurs MP3</div>
             <input type="file" id="file_music" accept="audio/mp3" multiple>
-            <div id="upload-progress" style="display:none; font-size:12px; color:#17a2b8; margin-top:4px;"></div>
+            <div id="upload-progress" style="display:none; font-size:12px; color:var(--info); margin-top:4px;"></div>
             <button class="btn-update" onclick="uploadMusic()" style="background:var(--info); margin-top:8px;">
                 AJOUTER À LA PLAYLIST
             </button>
@@ -218,7 +272,7 @@
             <textarea
                    id="info_message" oninput="window._msgLastModified=Date.now()"
                    placeholder="Page 1&#10;Page 2&#10;Page 3"
-                   style="width:100%; min-height:110px; resize:vertical; padding:12px; margin-top:8px; border-radius:8px; border:1px solid #ccc; box-sizing:border-box; font-family:inherit; font-size:14px; line-height:1.5;"></textarea>
+                   style="width:100%; min-height:110px; resize:vertical; padding:12px; margin-top:8px; border-radius:8px; border:1.5px solid var(--border); box-sizing:border-box; font-family:inherit; font-size:14px; line-height:1.5;"></textarea>
 
             <input type="number"
                    id="page_duration" oninput="window._pageDurLastModified=Date.now()"
@@ -234,13 +288,13 @@
         <div class="card">
             <span class="card-title">📊 Monitoring Pi</span>
             <div style="display:flex; align-items:center; margin-bottom:6px;">
-                <span class="firebase-dot" id="firebase-dot" style="background:#ccc;"></span>
+                <span class="firebase-dot" id="firebase-dot" style="background:var(--dim);"></span>
                 <span id="firebase-status" style="font-size:13px; color:#666;">Firebase...</span>
                 <span style="flex:1;"></span>
                 <span id="pi-uptime" style="font-size:12px; color:#999;">Uptime: --</span>
             </div>
             <div style="display:flex; align-items:center; margin-bottom:6px;">
-                <span class="firebase-dot" id="pupitre-dot" style="background:#ccc;"></span>
+                <span class="firebase-dot" id="pupitre-dot" style="background:var(--dim);"></span>
                 <span id="pupitre-status" style="font-size:13px; color:#666;">Pupitre : ...</span>
             </div>
             <div id="pi-tunnel-status" style="font-size:11px; color:#999; margin-bottom:8px; word-break:break-all;">Connexion Pi: détection...</div>
@@ -250,7 +304,7 @@
                         <span class="stat-label">CPU</span>
                         <span class="stat-value" id="pi-cpu">--%</span>
                     </div>
-                    <div class="stat-bar"><div class="stat-bar-fill" id="pi-cpu-bar" style="background:#17a2b8; width:0%;"></div></div>
+                    <div class="stat-bar"><div class="stat-bar-fill" id="pi-cpu-bar" style="background:var(--info); width:0%;"></div></div>
                 </div>
             </div>
             <div class="stat-box">
@@ -259,7 +313,7 @@
                         <span class="stat-label">RAM</span>
                         <span class="stat-value" id="pi-ram">--%</span>
                     </div>
-                    <div class="stat-bar"><div class="stat-bar-fill" id="pi-ram-bar" style="background:#28a745; width:0%;"></div></div>
+                    <div class="stat-bar"><div class="stat-bar-fill" id="pi-ram-bar" style="background:var(--success); width:0%;"></div></div>
                 </div>
             </div>
             <div class="stat-box">
@@ -267,7 +321,7 @@
                 <span class="stat-value" id="pi-temp">--°C</span>
             </div>
             <div style="font-size:12px; color:#555; font-weight:bold; margin-top:10px; margin-bottom:6px;">JOURNAL (annonces, comptages, attente...)</div>
-            <div id="annonce-history" style="max-height:200px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px;">
+            <div id="annonce-history" style="max-height:200px; overflow-y:auto; border:1px solid var(--border); border-radius:8px;">
                 <div style="padding:12px; color:#999; text-align:center; font-size:13px;">Aucune annonce</div>
             </div>
         </div>
@@ -352,22 +406,22 @@
         if (data.force_open_panel) {
             modeEl.innerHTML = "MANU : OUVERT";
             modeEl.style.color = "var(--success)";
-            modeEl.style.background = "#e8f5e9";
+            modeEl.style.background = "var(--success-pale)";
         } else if (data.force_close_panel) {
             modeEl.innerHTML = "MANU : FERME";
             modeEl.style.color = "var(--danger)";
-            modeEl.style.background = "#ffebee";
+            modeEl.style.background = "var(--danger-pale)";
         } else if (data.mode_auto) {
             const etat = isOpen
-                ? '<span style="color:#28a745;font-weight:bold;"> ● OUVERT</span>'
-                : '<span style="color:#dc3545;font-weight:bold;"> ● FERME</span>';
+                ? '<span style="color:var(--success);font-weight:bold;"> ● OUVERT</span>'
+                : '<span style="color:var(--danger);font-weight:bold;"> ● FERME</span>';
             modeEl.innerHTML = "AUTO" + etat;
             modeEl.style.color = "var(--info)";
-            modeEl.style.background = "#e1f5fe";
+            modeEl.style.background = "var(--info-pale)";
         } else {
             modeEl.innerHTML = "MODE : MANUEL";
             modeEl.style.color = "var(--danger)";
-            modeEl.style.background = "#ffebee";
+            modeEl.style.background = "var(--danger-pale)";
         }
 
         // ── Helper : est-ce que l'utilisateur est en train de modifier ce champ ? ──
@@ -397,7 +451,7 @@
             var st = document.getElementById('intervalle_status');
             if (st) {
                 st.innerText = _intervalleActif ? 'Actif' : 'Desactive';
-                st.style.color = _intervalleActif ? '#28a745' : '#dc3545';
+                st.style.color = _intervalleActif ? 'var(--success)' : 'var(--danger)';
             }
         }
 
@@ -678,23 +732,23 @@
         if (!box) return;
 
         if (!_intervalleActif) {
-            box.innerText = 'DESACTIVE'; box.style.color = '#dc3545';
-            cdbox.style.background = '#fff5f5'; return;
+            box.innerText = 'DESACTIVE'; box.style.color = 'var(--danger)';
+            cdbox.style.background = 'var(--danger-pale)'; return;
         }
         if (_annonceEnCours) {
-            box.innerText = 'DIFFUSION'; box.style.color = '#e65c00';
-            cdbox.style.background = '#fff3e0'; return;
+            box.innerText = 'DIFFUSION'; box.style.color = 'var(--urgent)';
+            cdbox.style.background = 'var(--warning-pale)'; return;
         }
         if (_cdRemaining < 0) {
-            box.innerText = '--:--'; box.style.color = '#999';
-            cdbox.style.background = '#f0f3f8'; return;
+            box.innerText = '--:--'; box.style.color = 'var(--text-muted)';
+            cdbox.style.background = 'var(--mist)'; return;
         }
         // Interpoler depuis la dernière valeur reçue
         var sinceReceived = (Date.now() - _cdReceivedAt) / 1000;
         var remaining = Math.max(0, _cdRemaining - sinceReceived);
         box.innerText = fmtCD(remaining);
-        box.style.color = remaining < 30 ? '#dc3545' : remaining < 60 ? '#f39c12' : '#005096';
-        cdbox.style.background = remaining < 30 ? '#fff5f5' : '#f0f3f8';
+        box.style.color = remaining < 30 ? 'var(--danger)' : remaining < 60 ? 'var(--warning)' : 'var(--primary)';
+        cdbox.style.background = remaining < 30 ? 'var(--danger-pale)' : 'var(--mist)';
     }, 500);
 
     window.toggleIntervalle = function(checked) {
@@ -703,7 +757,7 @@
         piSend({ action: 'params', intervalle_actif: checked }, null);
         update(dbRef, { intervalle_actif: checked });
         var st = document.getElementById('intervalle_status');
-        if (st) { st.innerText = checked ? 'Actif' : 'Desactive'; st.style.color = checked ? '#28a745' : '#dc3545'; }
+        if (st) { st.innerText = checked ? 'Actif' : 'Desactive'; st.style.color = checked ? 'var(--success)' : 'var(--danger)'; }
 
     };
 
@@ -748,9 +802,9 @@
         container.innerHTML = playlist.map((name, i) => `
             <div class="playlist-item ${i === currentIndex ? 'active' : ''}"
                  onclick="window.selectTrack(${i}, '${name.replace(/'/g,"\'")}')">
-                <span style="color:#999;font-size:11px;min-width:22px;">${i+1}</span>
+                <span style="color:var(--text-muted);font-size:11px;min-width:22px;">${i+1}</span>
                 <span class="track-name">${name}</span>
-                ${i === currentIndex ? '<span style="color:#005096;font-size:10px;margin-right:4px;">▶</span>' : ''}
+                ${i === currentIndex ? '<span style="color:var(--primary);font-size:10px;margin-right:4px;">▶</span>' : ''}
                 <span class="track-del" onclick="event.stopPropagation();deleteTrack(${i})">✕</span>
             </div>
         `).join('');
@@ -905,17 +959,17 @@
     onValue(dbRef, function(snapshot) {
         if (snapshot.val()) {
             _firebaseOk = true;
-            document.getElementById('firebase-dot').style.background = '#28a745';
+            document.getElementById('firebase-dot').style.background = 'var(--success)';
             document.getElementById('firebase-status').innerText = 'Firebase connecté';
-            document.getElementById('firebase-status').style.color = '#28a745';
+            document.getElementById('firebase-status').style.color = 'var(--success)';
         }
     });
     // Si pas de données après 5s → Firebase KO
     setTimeout(function() {
         if (!_firebaseOk) {
-            document.getElementById('firebase-dot').style.background = '#dc3545';
+            document.getElementById('firebase-dot').style.background = 'var(--danger)';
             document.getElementById('firebase-status').innerText = 'Firebase déconnecté';
-            document.getElementById('firebase-status').style.color = '#dc3545';
+            document.getElementById('firebase-status').style.color = 'var(--danger)';
         }
     }, 5000);
 
@@ -940,17 +994,17 @@
             var pupitreDot = document.getElementById('pupitre-dot');
             var pupitreLbl = document.getElementById('pupitre-status');
             if (!s.pupitre_seen) {
-                pupitreDot.style.background = '#ccc';
+                pupitreDot.style.background = 'var(--dim)';
                 pupitreLbl.innerText = 'Pupitre : jamais vu';
-                pupitreLbl.style.color = '#666';
+                pupitreLbl.style.color = 'var(--text-muted)';
             } else if (s.pupitre_online) {
-                pupitreDot.style.background = '#28a745';
+                pupitreDot.style.background = 'var(--success)';
                 pupitreLbl.innerText = 'Pupitre en ligne';
-                pupitreLbl.style.color = '#28a745';
+                pupitreLbl.style.color = 'var(--success)';
             } else {
-                pupitreDot.style.background = '#dc3545';
+                pupitreDot.style.background = 'var(--danger)';
                 pupitreLbl.innerText = 'Pupitre hors ligne';
-                pupitreLbl.style.color = '#dc3545';
+                pupitreLbl.style.color = 'var(--danger)';
             }
             // Historique annonces
             var hist = document.getElementById('annonce-history');
@@ -976,7 +1030,7 @@
         document.getElementById('pi-cpu-bar').style.width = _piCpu + '%';
         document.getElementById('pi-ram-bar').style.width = _piRam + '%';
         var tempEl = document.getElementById('pi-temp');
-        tempEl.style.color = _piTemp > 70 ? '#dc3545' : _piTemp > 55 ? '#f39c12' : '#28a745';
+        tempEl.style.color = _piTemp > 70 ? 'var(--danger)' : _piTemp > 55 ? 'var(--warning)' : 'var(--success)';
     }, 500);
 
     setInterval(fetchPiStats, 3000);
